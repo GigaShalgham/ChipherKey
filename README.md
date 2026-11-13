@@ -18,14 +18,14 @@ Turnypt adds end-to-end message encryption to the messaging apps you
 already use — SMS, Telegram, WhatsApp, anything that supports standard text
 selection or sharing — without any server, account, or network access. You
 keep the keyboard you already use: select the text you want to protect, tap
-**Encrypt (Turnypt)**, and the draft is replaced with a `CK1:...`
+**Encrypt (Turnypt)**, and the draft is replaced with a `TNP1:...`
 ciphertext you send as an ordinary message. On the receiving side, select
 or share the message, tap **Decrypt (Turnypt)**, enter the shared
 passphrase, and read the plaintext preview.
 
 ```
 Send:    type with any keyboard → select the draft → “Encrypt (Turnypt)” → ciphertext replaces it → send
-Receive: select/share the CK1:... message → “Decrypt (Turnypt)” → passphrase → preview → Copy
+Receive: select/share the TNP1:... message → “Decrypt (Turnypt)” → passphrase → preview → Copy
 ```
 
 When an app's selection toolbar is unavailable, the Home screen offers an
@@ -90,7 +90,7 @@ sha256sum Turnypt-v1.0.0-debug.apk
 
 1. **Pair once.** Alice creates a contact "Bob" in the app; Turnypt
    generates a key era (public `keyId` + `salt` + Argon2id parameters) and
-   shows a `CKS1:...` invite code. Alice sends the code to Bob over any
+   shows a `TNS1:...` invite code. Alice sends the code to Bob over any
    channel. Bob creates a contact "Alice", pastes the code. Separately —
    ideally in person — both agree on a shared passphrase.
 2. **Unlock per session.** The passphrase is never stored. Deriving the
@@ -114,7 +114,7 @@ sha256sum Turnypt-v1.0.0-debug.apk
 ## Security properties
 
 - AES-256-GCM (JCA) with a 96-bit random nonce and 128-bit tag; the entire
-  CK1 header is bound as associated data.
+  envelope header is bound as associated data.
 - Argon2id (RFC 9106) via BouncyCastle's lightweight API; no JCA provider
   is inserted.
 - Derived keys are never persisted raw; at rest only a Keystore-wrapped,
@@ -173,15 +173,16 @@ docs/           PROTOCOL, ARCHITECTURE, THREAT_MODEL, PLUGINS, dated security se
 ```
 
 Module dependency directions are acyclic and documented in
-[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); the CK1 wire format and
-CKS1 invites are specified in [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md); the TNP1 wire format and
+TNS1 invites (legacy `CK1:`/`CKS1:` still decode) are specified in
+[`docs/PROTOCOL.md`](docs/PROTOCOL.md).
 
 ## Documentation
 
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — module structure and
   dependency rules
-- [`docs/PROTOCOL.md`](docs/PROTOCOL.md) — CK1 wire format and CKS1 invite
-  encoding
+- [`docs/PROTOCOL.md`](docs/PROTOCOL.md) — TNP1 wire format and TNS1 invite
+  encoding (legacy `CK1:`/`CKS1:` readable)
 - [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) — what is protected, what
   is not
 - [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md) — where the selection

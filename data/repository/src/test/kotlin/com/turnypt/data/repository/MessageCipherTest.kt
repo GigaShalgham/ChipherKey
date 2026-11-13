@@ -45,7 +45,8 @@ class MessageCipherTest {
         val outcome = sender.cipher.encryptDraft(contactId, "meet me at the usual place")
         assertTrue(outcome is EncryptOutcome.Encrypted)
         val envelope = (outcome as EncryptOutcome.Encrypted).envelope
-        assertTrue(envelope.startsWith("CK1:"))
+        // v1.1.0: written envelopes carry the Turnypt prefix.
+        assertTrue(envelope.startsWith("TNP1:"))
 
         val decrypted = receiver.cipher.decryptEnvelope(envelope)
         assertTrue(decrypted is DecryptOutcome.Decrypted)

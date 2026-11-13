@@ -197,6 +197,11 @@ class CompanionViewModel @Inject constructor(
         // v0.5.2: the prepare card's passphrase field follows the selected
         // contact — recompute whether the suggestion is honest for it.
         refreshSuggestPassphrase()
+        // v1.1.0 (user report: "no fingerprint when opening a contact
+        // outside the app, on the floating assistant"): the prepare card's
+        // passphrase field now ALSO recomputes the fingerprint offer, so a
+        // remembered wrap for the newly selected contact shows its button.
+        refreshBiometricOffer()
     }
 
     fun dismissNotice() {
@@ -657,6 +662,9 @@ class CompanionViewModel @Inject constructor(
             // sticky (locked) contact — compute whether the suggestion is
             // honest for it.
             refreshSuggestPassphrase()
+            // v1.1.0: ... and whether a remembered fingerprint wrap exists
+            // for it, so the field offers "Use fingerprint" up front.
+            refreshBiometricOffer()
         }
     }
 

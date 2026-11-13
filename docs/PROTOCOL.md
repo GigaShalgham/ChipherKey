@@ -1,18 +1,27 @@
-# The CK1 Wire Protocol (version 1)
+# The Turnypt Wire Protocol (version 1)
 
-The wire protocol of **Turnypt** (formerly CipherKey; the format and its
-identifiers predate the rename and are unchanged).
+The wire protocol of **Turnypt** (formerly CipherKey). v1.1.0 moved the
+visible prefixes off the retired brand — envelopes write `TNP1:` and
+invites `TNS1:`; the CipherKey-era `CK1:`/`CKS1:` (and the binary CKF1
+magic, HKDF info and MIME type) still decode unchanged. The payload layout
+behind every prefix is byte-for-byte the same.
 
 Status: **implemented and frozen for v1** — any breaking change requires a
 new version byte and a migration note here.
 
 ## Overview
 
-A CK1 message is a self-contained, authenticated envelope:
+A Turnypt message is a self-contained, authenticated envelope:
 
 ```
-"CK1:" + base64url(payload, no padding)
+"TNP1:" + base64url(payload, no padding)    ← written by Turnypt (v1.1.0+)
+"CK1:"  + the same payload                   ← CipherKey-era, still decoded
 ```
+
+Both prefixes decode identically: detection is by prefix, automatic, and
+never surfaced to the user. The payload layout — including the keyId that
+resolves the contact and its friend era — is unchanged between the two,
+so a legacy envelope walks the exact same path.
 
 The decoder is strict: it rejects a missing prefix, `=` padding, the
 standard base64 alphabet (`+`, `/`), embedded whitespace, payloads above
@@ -94,10 +103,11 @@ Design notes:
 | Max payload (envelope bytes) | 256 KiB |
 | Max encoded chars | 360,000 |
 
-## CKS1 invites (key-era sharing)
+## TNS1 invites (key-era sharing)
 
 ```
-"CKS1:" + base64url(payload, no padding)
+"TNS1:" + base64url(payload, no padding)    ← written by Turnypt (v1.1.0+)
+"CKS1:" + the same payload                   ← CipherKey-era, still decoded
 
 offset  size  field
 0       1     invite version                0x01
@@ -129,7 +139,7 @@ the RustCrypto password-hashes known-answer suite (`argon2/tests/kat.rs`,
 `argon2id_v0x13`), which itself validates against the reference C
 implementation.
 
-### CK1 golden vector (envelope cross-check)
+### Golden vector (envelope cross-check)
 
 Fixed inputs:
 
@@ -139,23 +149,27 @@ keyId      = (i+100) mod 256,  i = 0..15
 salt       = (i+200) mod 256,  i = 0..15
 params     = Argon2id, 64 MiB (exponent 16) / 3 passes / 1 lane
 nonce      = 0,1,…,11            (deterministic random source)
-plaintext  = "CipherKey CK1 golden vector v1"   (UTF-8)
+plaintext  = "CipherKey CK1 golden vector v1"   (UTF-8; historical fixture —
+            it is INSIDE the ciphertext, so changing it would change the
+            envelope bytes; the anchor stays stable by design)
 ```
 
-Expected envelope (asserted in `Ck1CodecTest`):
+Expected envelope (asserted in `Ck1CodecTest`; the same body under the
+legacy `CK1:` prefix is asserted to decode identically):
 
 ```
-CK1:AQEBAWRlZmdoaWprbG1ub3BxcnMQAAAAAwAByMnKy8zNzs_Q0dLT1NXW1wABAgMEBQYHCAkKC8sUsW5uL0eG8bhe2kE3XlxcDpO9PEBc00dLZZzZnYIjOjfyDpIIFAuNE5dTp0c
+TNP1:AQEBAWRlZmdoaWprbG1ub3BxcnMQAAAAAwAByMnKy8zNzs_Q0dLT1NXW1wABAgMEBQYHCAkKC8sUsW5uL0eG8bhe2kE3XlxcDpO9PEBc00dLZZzZnYIjOjfyDpIIFAuNE5dTp0c
 ```
 
-Any conforming CK1 implementation must produce the identical string
-(AES-GCM is deterministic given key/nonce/plaintext/AAD).
+Any conforming implementation must produce the identical string
+(AES-GCM is deterministic given key/nonce/plaintext/AAD). The body is
+unchanged from the pre-rebrand vector — only the written prefix moved.
 
 ## Error taxonomy (decoder side)
 
 | Condition | Error |
 |---|---|
-| Missing `CK1:` prefix / bad base64url / wrong length | `MalformedMessage` |
+| Missing `TNP1:`/`CK1:` prefix / bad base64url / wrong length | `MalformedMessage` |
 | Payload below 71 bytes | `MalformedMessage` |
 | Unknown version byte | `UnsupportedVersion(v)` |
 | Unknown mode / cipher / KDF id | `UnsupportedMode/Algorithm/Kdf(id)` |
@@ -191,3 +205,10 @@ offset size field
   ending without one is `FileTruncated`.
 - No `CKF1` magic at the start is `NotACipherFile`; an unknown header
   keyId is the same `UnknownKey` as the text path.
+
+> v1.1.0 migration note: the binary CKF1 magic, the
+> `"CipherKey-CKF1-v1"` HKDF info string, the `.cki` extension and the
+> `application/x-cipherkey` MIME type are DELIBERATELY UNCHANGED. They are
+> invisible bytes inside every .cki file ever written; renaming them buys
+> no visible identity and would churn the file ecosystem. Only the
+> user-visible text prefixes moved (TNP1:/TNS1:, legacy readable).

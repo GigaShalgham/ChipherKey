@@ -199,7 +199,7 @@ class ImeControllerTest {
         advanceUntilIdle()
 
         assertNull(harness.controller.passphrasePrompt.value)
-        assertTrue(harness.textField.text.startsWith("CK1:"))
+        assertTrue(harness.textField.text.startsWith("TNP1:"))
         assertTrue(!harness.textField.text.contains("hello bob"))
         assertTrue(harness.controller.notice.value?.contains("Encrypted") == true)
     }
@@ -328,6 +328,7 @@ class ImeControllerTest {
         val notice = harness.controller.notice.value
         assertNotNull(notice)
         assertTrue(notice!!.contains("16 KiB"))
+        assertFalse(harness.textField.text.startsWith("TNP1:"))
         assertFalse(harness.textField.text.startsWith("CK1:"))
     }
 }

@@ -58,7 +58,7 @@
     <string name="clipboard_history_empty">Nothing here yet. Text you copy lands here when you open Turnypt or paste.</string>
     <string name="clipboard_history_cleared">Clipboard history cleared.</string>
     <string name="clipboard_history_truncated">truncated</string>
-    <string name="clipboard_history_ck1_tag">CK1</string>
+    <string name="clipboard_history_ck1_tag">TNP1</string>
     <string name="clipboard_history_just_now">just now</string>
     <string name="clipboard_history_minutes_ago">%1$d min ago</string>
     <string name="clipboard_history_hours_ago">%1$d h ago</string>
@@ -116,11 +116,11 @@
     <string name="encrypt_action">Encrypt</string>
     <string name="encrypt_contact_label">Encrypt for</string>
     <string name="decrypt_title">Decrypt</string>
-    <string name="decrypt_subtitle">Paste a CK1:… message and read its original text.</string>
+    <string name="decrypt_subtitle">Paste a TNP1:… message and read its original text.</string>
     <string name="decrypt_action">Decrypt</string>
     <string name="decrypt_input_label">Encrypted message</string>
-    <string name="decrypt_input_hint">Paste the CK1:… message here…</string>
-    <string name="decrypt_ck1_detected">CK1 message detected</string>
+    <string name="decrypt_input_hint">Paste the TNP1:… message here…</string>
+    <string name="decrypt_ck1_detected">Encrypted message detected</string>
     <string name="tools_input_label">Message</string>
     <string name="tools_input_hint">Type or paste the text here…</string>
 
@@ -139,7 +139,7 @@
     <string name="contact_new_title">New contact</string>
     <string name="contact_name_label">Name</string>
     <string name="contact_invite_label">Invite code (optional)</string>
-    <string name="contact_invite_help">Leave empty to create a new key (you share the code). Paste their CKS1:… code to import their key.</string>
+    <string name="contact_invite_help">Leave empty to create a new key (you share the code). Paste their TNS1:… code to import their key.</string>
     <string name="contact_argon2_title">Argon2id strength</string>
     <string name="contact_create">Create</string>
     <string name="cancel">Cancel</string>
@@ -204,8 +204,8 @@
     <string name="kdf_profile_desc">%1$d MiB · %2$d passes</string>
     <string name="settings_about_title">About</string>
     <string name="settings_about_version">Turnypt %1$s — local-first encryption companion.</string>
-    <string name="settings_about_line2">CK1 protocol v1 + CKF1 files · AES-256-GCM / ChaCha20-Poly1305 · Argon2id (RFC 9106) · Apache-2.0 license.</string>
-    <string name="settings_about_line3">Public-key mode (CK1 mode 0x02) is specified but not yet integrated.</string>
+    <string name="settings_about_line2">TNP1 protocol v1 (reads legacy CK1) + CKF1 files · AES-256-GCM / ChaCha20-Poly1305 · Argon2id (RFC 9106) · Apache-2.0 license.</string>
+    <string name="settings_about_line3">Public-key mode (mode 0x02) is specified but not yet integrated.</string>
     <string name="state_on">On</string>
     <string name="state_off">Off</string>
 
@@ -227,13 +227,13 @@
     <string name="notice_no_contacts">No contacts yet. Open Turnypt and create a contact with a shared passphrase first.</string>
     <string name="notice_no_era">This contact has no key era yet. Open the app, open the contact, and create or import a key first.</string>
     <string name="notice_no_selection_encrypt">No text was selected. Select the draft text and try again.</string>
-    <string name="notice_no_selection_decrypt">No text was selected. Select the whole \"CK1:…\" message and try again.</string>
-    <string name="notice_not_envelope">This text is not a CK1 encrypted message. Select the whole \"CK1:…\" message and try again.</string>
-    <string name="notice_nothing_shared">Nothing was shared. Share the \"CK1:…\" message text with Turnypt.</string>
+    <string name="notice_no_selection_decrypt">No text was selected. Select the whole encrypted message and try again.</string>
+    <string name="notice_not_envelope">This text is not an encrypted message. Select the whole message and try again.</string>
+    <string name="notice_nothing_shared">Nothing was shared. Share the encrypted message text with Turnypt.</string>
     <string name="notice_nothing_to_encrypt">Nothing to encrypt.</string>
     <string name="notice_oversized_encrypt">The selected text is longer than %1$s KiB and cannot be encrypted as one message.</string>
-    <string name="notice_oversized_decrypt">The selected text is longer than %1$s KiB and is not a valid CK1 envelope.</string>
-    <string name="notice_oversized_shared">The shared text is longer than %1$s KiB and is not a valid CK1 envelope.</string>
+    <string name="notice_oversized_decrypt">The selected text is longer than %1$s KiB and is not a valid encrypted envelope.</string>
+    <string name="notice_oversized_shared">The shared text is longer than %1$s KiB and is not a valid encrypted envelope.</string>
     <string name="notice_passphrase_rejected">Passphrase rejected: %1$s</string>
     <string name="notice_unknown_key">The key for this message is not on this device. Import the contact\'s invite code first.</string>
     <string name="notice_unlock_failed">Unlock failed: %1$s</string>

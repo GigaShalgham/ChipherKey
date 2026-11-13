@@ -17,7 +17,7 @@
                             │                           │
         ┌───────────────────▼───────────────────────────▼──────────┐
         │ :core:sessions   :core:messages   :core:keys   :core:... │
-        │ (in-memory keys) (CK1/CKS1 codec)(protector)  crypto     │
+        │ (in-memory keys) (TNP1/TNS1 codec)(protector)  crypto     │
         └───────────────────────────┬──────────────────────────────┘
                                     │
                      ┌──────────────▼──────────────┐
@@ -57,7 +57,7 @@ as future work):
               → SessionKeyRepository.latestEra     (Room)
               → KeySessionManager.activeSession    (memory; NeedsUnlock otherwise)
               → PassphraseCryptoProvider.encrypt   (AES-256-GCM, header as AAD)
-              → MessageEncoder.encode              ("CK1:" + base64url)
+              → MessageEncoder.encode              ("TNP1:" + base64url)
           → TextFieldAccess.replaceAll(envelope)   (deleteSurrounding + commit,
                                                     fallback selectAll, fallback clipboard)
 ```

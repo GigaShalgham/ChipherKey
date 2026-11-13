@@ -6,13 +6,15 @@ import com.turnypt.core.crypto.ProtocolHeader
 import com.turnypt.core.crypto.toByteArray
 
 /**
- * Encodes and decodes the CK1 message envelope.
+ * Encodes and decodes the message envelope.
  *
- * The encoder produces the canonical form. The decoder is strict and
- * performs NO cryptographic work: it validates the prefix, encoding,
- * size limits and header consistency, and maps wire values to typed
- * enums (rejecting unknown versions/algorithms/modes/kdfs) before the
- * caller ever attempts authentication.
+ * The encoder produces the canonical form and ALWAYS writes the Turnypt
+ * prefix (TNP1:, v1.1.0). The decoder is strict and performs NO
+ * cryptographic work: it validates the prefix (TNP1: or the legacy CK1: —
+ * auto-detected, never surfaced to the user), encoding, size limits and
+ * header consistency, and maps wire values to typed enums (rejecting
+ * unknown versions/algorithms/modes/kdfs) before the caller ever attempts
+ * authentication.
  */
 object MessageEncoder {
 
@@ -31,11 +33,10 @@ object MessageDecoder {
         if (text.length > Ck1Limits.MAX_ENCODED_CHARS) {
             throw Ck1FormatException("encoded message too large")
         }
-        if (!Ck1.isEnvelope(text)) {
-            throw Ck1FormatException("missing CK1: prefix")
-        }
+        val payloadText = Ck1.envelopePayload(text)
+            ?: throw Ck1FormatException("missing envelope prefix")
         val payload = try {
-            Ck1.decodeBase64Url(text.substring(Ck1.MAGIC.length))
+            Ck1.decodeBase64Url(payloadText)
         } catch (e: Ck1FormatException) {
             throw e
         }

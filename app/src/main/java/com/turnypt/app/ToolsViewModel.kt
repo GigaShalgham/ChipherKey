@@ -249,7 +249,43 @@ class ToolsViewModel @Inject constructor(
     }
 
     fun selectContact(id: ContactId) {
-        _state.value = _state.value.copy(selectedContactId = id)
+        _state.value = _state.value.copy(selectedContactId = id, notice = null)
+        armUnlockForSelection(id)
+    }
+
+    /**
+     * v1.1.0 (user report: "opening a contact with the password, as a
+     * shortcut, in the encryption section does nothing"): selecting a
+     * LOCKED contact from the Encrypt tab's picker now arms the unlock card
+     * immediately — pending state, the honest suggestion gate and the
+     * FINGERPRINT offer — instead of waiting for an encrypt attempt that
+     * never came. Before this, the passphrase submit used to hit the
+     * `pendingText == null` guard and silently do nothing, and the
+     * fingerprint button was never even computed on that path.
+     * Selecting an UNLOCKED contact clears any stale card state instead.
+     */
+    private fun armUnlockForSelection(id: ContactId) {
+        launchSafely {
+            if (messageCipher.isUnlocked(id)) {
+                if (_state.value.unlockNeeded || _state.value.pendingContactId != null) {
+                    _state.value = _state.value.copy(
+                        unlockNeeded = false,
+                        pendingContactId = null,
+                        pendingEraSessionId = null,
+                        biometricOffered = false,
+                    )
+                }
+                return@launchSafely
+            }
+            _state.value = _state.value.copy(
+                unlockNeeded = true,
+                pendingContactId = id,
+                unlockContactName = _state.value.contacts.firstOrNull { it.id == id }?.displayName,
+                pendingEraSessionId = null,
+                suggestPassphrase = sessionKeys.awaitingFirstPassphrase(id),
+            )
+            refreshBiometricOffer()
+        }
     }
 
     fun dismissNotice() {
@@ -614,7 +650,11 @@ class ToolsViewModel @Inject constructor(
         }
     }
 
-    /** Unlock (passphrase) and continue the pending operation.
+    /** Unlock (passphrase) and continue the pending operation — or, since
+     * v1.1.0, just OPEN the contact when no operation is pending (no text,
+     * no image): the shortcut the Encrypt tab's unlock card promises when a
+     * locked contact is selected directly. The silent no-op return (both
+     * pending slots null wiped the passphrase and did nothing) is gone.
      *
      * v0.4.0: when the pending unlock is for a superseded era
      * ([ToolsUiState.pendingEraSessionId]), it goes through
@@ -628,13 +668,9 @@ class ToolsViewModel @Inject constructor(
         // v0.6.0: an image operation pending an unlock continues INSTEAD of
         // the text continuation (which is null in the image flows anyway).
         val imageOp = pendingImageOp
-        val text = if (imageOp == null) {
-            pendingText ?: run {
-                passphrase.wipe(); return
-            }
-        } else {
-            null
-        }
+        // v1.1.0: nullable — null with no image op means "open the contact,
+        // nothing queued".
+        val text: String? = if (imageOp == null) pendingText else null
         val eraSessionId = _state.value.pendingEraSessionId
         launchSafely {
             try {
@@ -658,6 +694,15 @@ class ToolsViewModel @Inject constructor(
                         if (eraSessionId == null) {
                             lastUnlockedContactId = id
                             offerRemember(id)
+                            if (imageOp == null && text == null) {
+                                // Standalone open: no operation to continue —
+                                // clear the pending card state. The Encrypt
+                                // tab swaps the card for the Encrypt button.
+                                _state.value = _state.value.copy(
+                                    pendingContactId = null,
+                                    unlockContactName = null,
+                                )
+                            }
                         }
                         if (imageOp != null) {
                             pendingImageOp = null

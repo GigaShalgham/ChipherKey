@@ -317,7 +317,8 @@ class CompanionWorkflowRoundTripTest {
         val outcome = device.cipher.encryptDraft(contactId, text)
         assertTrue(outcome is EncryptOutcome.Encrypted)
         val envelope = (outcome as EncryptOutcome.Encrypted).envelope
-        assertTrue(envelope.startsWith("CK1:"))
+        // v1.1.0: written envelopes carry the Turnypt prefix.
+        assertTrue(envelope.startsWith("TNP1:"))
         return envelope
     }
 }

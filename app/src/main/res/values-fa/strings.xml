@@ -59,7 +59,7 @@
     <string name="clipboard_history_empty">هنوز چیزی اینجا نیست. متن‌هایی که کپی می‌کنید با باز کردن Turnypt یا چسباندن، اینجا ثبت می‌شوند.</string>
     <string name="clipboard_history_cleared">تاریخچهٔ کلیپ‌بورد پاک شد.</string>
     <string name="clipboard_history_truncated">کوتاه‌شده</string>
-    <string name="clipboard_history_ck1_tag">CK1</string>
+    <string name="clipboard_history_ck1_tag">TNP1</string>
     <string name="clipboard_history_just_now">همین حالا</string>
     <string name="clipboard_history_minutes_ago">%1$d دقیقه پیش</string>
     <string name="clipboard_history_hours_ago">%1$d ساعت پیش</string>
@@ -114,11 +114,11 @@
     <string name="encrypt_action">رمزنگاری</string>
     <string name="encrypt_contact_label">رمزنگاری برای</string>
     <string name="decrypt_title">رمزگشایی</string>
-    <string name="decrypt_subtitle">پیام CK1:… را بچسبانید و متن اصلی را بخوانید.</string>
+    <string name="decrypt_subtitle">پیام TNP1:… را بچسبانید و متن اصلی را بخوانید.</string>
     <string name="decrypt_action">رمزگشایی</string>
     <string name="decrypt_input_label">پیام رمزنگاری‌شده</string>
-    <string name="decrypt_input_hint">پیام CK1:… را اینجا بچسبانید…</string>
-    <string name="decrypt_ck1_detected">پیام CK1 شناسایی شد</string>
+    <string name="decrypt_input_hint">پیام TNP1:… را اینجا بچسبانید…</string>
+    <string name="decrypt_ck1_detected">پیام رمزنگاری‌شده شناسایی شد</string>
     <string name="tools_input_label">پیام</string>
     <string name="tools_input_hint">متن را اینجا بنویسید یا بچسبانید…</string>
 
@@ -137,7 +137,7 @@
     <string name="contact_new_title">مخاطب جدید</string>
     <string name="contact_name_label">نام</string>
     <string name="contact_invite_label">کد دعوت (اختیاری)</string>
-    <string name="contact_invite_help">برای ساختن کلید جدید خالی بگذارید (کد را شما به اشتراک می‌گذارید). برای درون‌ریزی کلید طرف مقابل، کد CKS1:… او را بچسبانید.</string>
+    <string name="contact_invite_help">برای ساختن کلید جدید خالی بگذارید (کد را شما به اشتراک می‌گذارید). برای درون‌ریزی کلید طرف مقابل، کد TNS1:… او را بچسبانید.</string>
     <string name="contact_argon2_title">قدرت Argon2id</string>
     <string name="contact_create">ساختن</string>
     <string name="cancel">لغو</string>
@@ -195,8 +195,8 @@
     <string name="kdf_profile_desc">%1$d مبی‌بایت · %2$d گذر</string>
     <string name="settings_about_title">درباره</string>
     <string name="settings_about_version">Turnypt %1$s — همراهِ رمزنگاری local-first.</string>
-    <string name="settings_about_line2">پروتکل CK1 نسخهٔ ۱ + فایل‌های CKF1 · AES-256-GCM / ChaCha20-Poly1305 · Argon2id (RFC 9106) · مجوز Apache-2.0.</string>
-    <string name="settings_about_line3">حالت کلید عمومی (حالت 0x02 در CK1) مشخص شده اما هنوز یکپارچه نشده است.</string>
+    <string name="settings_about_line2">پروتکل TNP1 نسخهٔ ۱ (قدیمی CK1 هم خوانده می‌شود) + فایل‌های CKF1 · AES-256-GCM / ChaCha20-Poly1305 · Argon2id (RFC 9106) · مجوز Apache-2.0.</string>
+    <string name="settings_about_line3">حالت کلید عمومی (حالت 0x02) مشخص شده اما هنوز یکپارچه نشده است.</string>
     <string name="state_on">روشن</string>
     <string name="state_off">خاموش</string>
 
@@ -218,13 +218,13 @@
     <string name="notice_no_contacts">هنوز مخاطبی ندارید. ابتدا Turnypt را باز کنید و مخاطبی با عبارت عبور مشترک بسازید.</string>
     <string name="notice_no_era">این مخاطب هنوز دورهٔ کلیدی ندارد. برنامه را باز کنید، مخاطب را باز کنید و ابتدا کلیدی بسازید یا درون‌ریزی کنید.</string>
     <string name="notice_no_selection_encrypt">متنی انتخاب نشده است. متن پیش‌نویس را انتخاب کنید و دوباره امتحان کنید.</string>
-    <string name="notice_no_selection_decrypt">متنی انتخاب نشده است. کل پیام «CK1:…» را انتخاب کنید و دوباره امتحان کنید.</string>
-    <string name="notice_not_envelope">این متن یک پیام رمزنگاری‌شدهٔ CK1 نیست. کل پیام «CK1:…» را انتخاب کنید و دوباره امتحان کنید.</string>
-    <string name="notice_nothing_shared">چیزی به اشتراک گذاشته نشد. متن پیام «CK1:…» را با Turnypt به اشتراک بگذارید.</string>
+    <string name="notice_no_selection_decrypt">متنی انتخاب نشده است. کل پیام رمزنگاری‌شده را انتخاب کنید و دوباره امتحان کنید.</string>
+    <string name="notice_not_envelope">این متن یک پیام رمزنگاری‌شده نیست. کل پیام را انتخاب کنید و دوباره امتحان کنید.</string>
+    <string name="notice_nothing_shared">چیزی به اشتراک گذاشته نشد. متن پیام رمزنگاری‌شده را با Turnypt به اشتراک بگذارید.</string>
     <string name="notice_nothing_to_encrypt">چیزی برای رمزنگاری نیست.</string>
     <string name="notice_oversized_encrypt">متن انتخاب‌شده از %1$s کیبی‌بایت بلندتر است و نمی‌توان آن را به‌صورت یک پیام رمزنگاری کرد.</string>
-    <string name="notice_oversized_decrypt">متن انتخاب‌شده از %1$s کیبی‌بایت بلندتر است و پاکت CK1 معتبری نیست.</string>
-    <string name="notice_oversized_shared">متن به‌اشتراک‌گذاشته‌شده از %1$s کیبی‌بایت بلندتر است و پاکت CK1 معتبری نیست.</string>
+    <string name="notice_oversized_decrypt">متن انتخاب‌شده از %1$s کیبی‌بایت بلندتر است و پاکت رمزنگاری‌شدهٔ معتبری نیست.</string>
+    <string name="notice_oversized_shared">متن به‌اشتراک‌گذاشته‌شده از %1$s کیبی‌بایت بلندتر است و پاکت رمزنگاری‌شدهٔ معتبری نیست.</string>
     <string name="notice_passphrase_rejected">عبارت عبور رد شد: %1$s</string>
     <string name="notice_unknown_key">کلید این پیام روی این دستگاه نیست. ابتدا کد دعوت مخاطب را درون‌ریزی کنید.</string>
     <string name="notice_unlock_failed">باز کردن قفل ناموفق بود: %1$s</string>

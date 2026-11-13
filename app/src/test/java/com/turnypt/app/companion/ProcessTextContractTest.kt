@@ -120,8 +120,13 @@ class ProcessTextContractTest {
 
     // ---------------------------------------------------------- envelopes
 
-    @Test fun envelopePrefixIsDetected() =
+    // v1.1.0: the written prefix is TNP1: (Turnypt); the CipherKey-era CK1:
+    // remains readable everywhere — detection covers both.
+
+    @Test fun envelopePrefixIsDetected() {
+        assertTrue(ProcessTextContract.isEnvelope("TNP1:QWxhZGRpbglvcGVuIHNlc2FtZQ"))
         assertTrue(ProcessTextContract.isEnvelope("CK1:QWxhZGRpbglvcGVuIHNlc2FtZQ"))
+    }
 
     @Test fun whitespacePaddedEnvelopeStillDetectedAfterTrim() {
         val out = ProcessTextContract.parseEnvelope("  CK1:abc123  ")
@@ -129,11 +134,15 @@ class ProcessTextContractTest {
         assertTrue(ProcessTextContract.isEnvelope(out.text))
     }
 
-    @Test fun inviteCodeIsNotAnEnvelope() =
+    @Test fun inviteCodeIsNotAnEnvelope() {
         assertFalse(ProcessTextContract.isEnvelope("CKS1:invite-material"))
+        assertFalse(ProcessTextContract.isEnvelope("TNS1:invite-material"))
+    }
 
-    @Test fun lowercasePrefixIsNotAnEnvelope() =
+    @Test fun lowercasePrefixIsNotAnEnvelope() {
         assertFalse(ProcessTextContract.isEnvelope("ck1:abc"))
+        assertFalse(ProcessTextContract.isEnvelope("tnp1:abc"))
+    }
 
     @Test fun arbitraryJunkIsNotAnEnvelope() {
         for (junk in listOf("", "hello", "CK1", "🤖", "null", "undefined")) {
@@ -142,9 +151,10 @@ class ProcessTextContractTest {
     }
 
     @Test fun barePrefixIsEnvelopeShapedButDecodesGracefullyLater() {
-        // "CK1:" alone passes the cheap prefix check; rejecting its payload
-        // is the decoder's job (strict parser, own golden tests). The
+        // "TNP1:"/"CK1:" alone pass the cheap prefix check; rejecting their
+        // payload is the decoder's job (strict parser, own golden tests). The
         // contract's responsibility is only shape detection + size.
+        assertTrue(ProcessTextContract.isEnvelope("TNP1:"))
         assertTrue(ProcessTextContract.isEnvelope("CK1:"))
     }
 }

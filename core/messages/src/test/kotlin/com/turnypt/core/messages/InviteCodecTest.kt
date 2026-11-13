@@ -17,7 +17,7 @@ class InviteCodecTest {
     @Test
     fun `encode decode roundtrip`() {
         val code = InviteCodec.encode(invite())
-        assertTrue(code.startsWith("CKS1:"))
+        assertTrue(code.startsWith("TNS1:"))
         val decoded = InviteCodec.decode(code)
         val original = invite()
         assertTrue(decoded.keyId.contentEquals(original.keyId))
@@ -26,12 +26,23 @@ class InviteCodecTest {
     }
 
     @Test
+    fun `legacy CKS1 prefix still decodes`() {
+        // v1.1.0: this build writes TNS1:, but CipherKey-era CKS1: invites
+        // keep decoding through the identical path (auto-detected).
+        val modern = InviteCodec.encode(invite())
+        val legacy = Ck1.LEGACY_INVITE_MAGIC + modern.removePrefix(Ck1.INVITE_MAGIC)
+        val decoded = InviteCodec.decode(legacy)
+        assertTrue(decoded.keyId.contentEquals(invite().keyId))
+        assertTrue(Ck1.isInvite(legacy))
+    }
+
+    @Test
     fun `invite does not leak through equals mismatch on tampered key`() {
         val code = InviteCodec.encode(invite())
-        val body = code.removePrefix("CKS1:")
+        val body = code.removePrefix("TNS1:")
         val bytes = Ck1.decodeBase64Url(body)
         bytes[9] = (bytes[9].toInt() xor 0x01).toByte()
-        val tampered = "CKS1:" + Ck1.encodeBase64Url(bytes)
+        val tampered = "TNS1:" + Ck1.encodeBase64Url(bytes)
         val decoded = InviteCodec.decode(tampered)
         assertTrue(!decoded.keyId.contentEquals(invite().keyId))
     }
@@ -39,7 +50,7 @@ class InviteCodecTest {
     @Test
     fun `wrong prefix is rejected`() {
         assertThrows(Ck1FormatException::class.java) {
-            InviteCodec.decode("CK1:" + InviteCodec.encode(invite()).removePrefix("CKS1:"))
+            InviteCodec.decode("CK1:" + InviteCodec.encode(invite()).removePrefix("TNS1:"))
         }
     }
 
@@ -60,36 +71,45 @@ class InviteCodecTest {
     @Test
     fun `unknown invite version is rejected`() {
         val code = InviteCodec.encode(invite())
-        val bytes = Ck1.decodeBase64Url(code.removePrefix("CKS1:"))
+        val bytes = Ck1.decodeBase64Url(code.removePrefix("TNS1:"))
         bytes[0] = 0x02
         assertThrows(Ck1FormatException::class.java) {
             InviteCodec.decode("CKS1:" + Ck1.encodeBase64Url(bytes))
+        }
+        assertThrows(Ck1FormatException::class.java) {
+            InviteCodec.decode("TNS1:" + Ck1.encodeBase64Url(bytes))
         }
     }
 
     @Test
     fun `unknown kdf id is rejected`() {
         val code = InviteCodec.encode(invite())
-        val bytes = Ck1.decodeBase64Url(code.removePrefix("CKS1:"))
+        val bytes = Ck1.decodeBase64Url(code.removePrefix("TNS1:"))
         bytes[1] = 0x7F
         assertThrows(Ck1FormatException::class.java) {
             InviteCodec.decode("CKS1:" + Ck1.encodeBase64Url(bytes))
+        }
+        assertThrows(Ck1FormatException::class.java) {
+            InviteCodec.decode("TNS1:" + Ck1.encodeBase64Url(bytes))
         }
     }
 
     @Test
     fun `out of range argon2 parameters are rejected`() {
         val code = InviteCodec.encode(invite())
-        val bytes = Ck1.decodeBase64Url(code.removePrefix("CKS1:"))
+        val bytes = Ck1.decodeBase64Url(code.removePrefix("TNS1:"))
         bytes[2] = 40 // memory exponent beyond MAX_MEMORY_EXPONENT
         assertThrows(Ck1FormatException::class.java) {
             InviteCodec.decode("CKS1:" + Ck1.encodeBase64Url(bytes))
+        }
+        assertThrows(Ck1FormatException::class.java) {
+            InviteCodec.decode("TNS1:" + Ck1.encodeBase64Url(bytes))
         }
     }
 
     @Test
     fun `invite length is compact`() {
         // 41 bytes -> 55 base64url chars + prefix.
-        assertEquals("CKS1:".length + 55, InviteCodec.encode(invite()).length)
+        assertEquals("TNS1:".length + 55, InviteCodec.encode(invite()).length)
     }
 }

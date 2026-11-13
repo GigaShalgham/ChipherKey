@@ -44,7 +44,7 @@ Sources: [Android Developers — custom text selection actions][1],
 ## The recommended flow in Telegram (zero extra taps over a toolbar)
 
 Receiving:
-1. Long-press the `CK1:…` message in Telegram → **Copy**.
+1. Long-press the `TNP1:…` message in Telegram → **Copy**.
 2. Long-press the **Turnypt** icon on the home screen →
    **Decrypt clipboard** (launcher shortcut, added in v0.5.0).
 3. Read the plaintext preview, **Copy** if needed, close — you land back

@@ -116,7 +116,14 @@ fun CompanionSheet(
 
             CompanionUiState.Phase.Prepare ->
                 if (state.mode == CompanionMode.ENCRYPT) {
-                    EncryptPrepareCard(state, onContactSelected, onEncrypt, onUnlockEncrypt, onCopyPassphrase)
+                    EncryptPrepareCard(
+                        state = state,
+                        onContactSelected = onContactSelected,
+                        onEncrypt = onEncrypt,
+                        onUnlockEncrypt = onUnlockEncrypt,
+                        onUseFingerprint = onRequestBiometricUnlock,
+                        onCopyPassphrase = onCopyPassphrase,
+                    )
                 } else {
                     // Decrypt transient state: work already in flight.
                     Column(
@@ -195,12 +202,19 @@ private fun SheetHeader(state: CompanionUiState) {
     }
 }
 
+/**
+ * v1.1.0: the prepare card's passphrase field (floating assistant / Home
+ * clipboard launches) now offers "Use fingerprint" whenever a remembered
+ * wrap exists — same affordance the unlock card already had. User report:
+ * "no fingerprint when opening a contact outside the app".
+ */
 @Composable
 private fun EncryptPrepareCard(
     state: CompanionUiState,
     onContactSelected: (ContactId) -> Unit,
     onEncrypt: () -> Unit,
     onUnlockEncrypt: (CharArray) -> Unit,
+    onUseFingerprint: () -> Unit,
     onCopyPassphrase: (String) -> Boolean,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -241,6 +255,14 @@ private fun EncryptPrepareCard(
                 allowSuggestion = state.suggestPassphrase,
                 onCopySensitive = onCopyPassphrase,
             )
+            // v1.1.0: remembered wrap for this contact's current era.
+            if (state.biometricOffered) {
+                OutlinedButton(
+                    onClick = onUseFingerprint,
+                    enabled = !state.busy,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(stringResource(R.string.use_fingerprint)) }
+            }
         } else {
             Button(
                 onClick = onEncrypt,

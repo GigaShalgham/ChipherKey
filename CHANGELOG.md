@@ -9,6 +9,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-13 — TNP1:/TNS1: wire prefixes, contact-open fixes
+
+The user's two reports on top of the 1.0.0 rebrand, plus the prefix
+migration they asked for.
+
+### Changed
+
+- **Wire prefixes moved off the retired brand** (user rule: "CK1 was for
+  CipherKey; now it must be TNP — the app should recognize old and new by
+  itself, with no explanation to the user"): text envelopes are now
+  written `TNP1:` and session invites `TNS1:`. Legacy `CK1:` / `CKS1:`
+  messages and invites still decode everywhere — detection is by prefix,
+  automatic, and invisible. The byte layout behind the prefix (including
+  the keyId that resolves the contact and its friend era) is unchanged,
+  so a legacy envelope walks the identical path; the golden vector keeps
+  its body and only the written prefix moved (the legacy twin is covered
+  by tests). User-visible hints moved with it (EN + FA strings: decrypt
+  hints, clipboard-history tag, invite help, the About card).
+- Deliberately UNCHANGED (invisible bytes inside files, renamed buys
+  nothing): the binary `CKF1` magic, the `"CipherKey-CKF1-v1"` HKDF info
+  string, the `.cki` extension and the `application/x-cipherkey` MIME
+  type — every .cki file ever written keeps opening.
+
+### Fixed
+
+- **Opening a contact with the password did nothing** (user report: "the
+  password shortcut in the encryption section doesn't work"): selecting a
+  LOCKED contact in the Encrypt tab showed the unlock card, but submitting
+  the passphrase hit a `pendingText == null` guard (no text and no image
+  operation queued) and silently returned. The unlock now stands on its
+  own: the contact opens, the card swaps for the Encrypt button, and the
+  Remember-key offer fires, so the next unlock can be a fingerprint.
+- **No fingerprint when opening a contact** (user report: "not in the
+  encryption and decryption sections, and outside the app on the floating
+  assistant"): the fingerprint offer is now computed the moment a locked
+  contact is selected (Encrypt tab picker, companion prepare card), and
+  the companion prepare card — the sheet the floating assistant opens
+  over other apps — renders the "Use fingerprint" button it never had.
+  The image flows share the same unlock card and benefit automatically.
+
 ## [1.0.0] - 2026-11-13 — the Turnypt rebrand: new name, new mark, .cki opens anywhere, assistant stays in context
 
 CipherKey is now **Turnypt** — turnip + encrypt. The identity changes;

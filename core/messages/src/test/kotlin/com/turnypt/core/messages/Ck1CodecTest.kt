@@ -35,7 +35,7 @@ class Ck1CodecTest {
     @Test
     fun `encode decode roundtrip`() {
         val envelope = MessageEncoder.encode(message())
-        assertTrue(envelope.startsWith("CK1:"))
+        assertTrue(envelope.startsWith("TNP1:"))
         val decoded = MessageDecoder.decode(envelope)
         val original = message()
         assertArrayEquals(original.keyId, decoded.keyId)
@@ -46,9 +46,35 @@ class Ck1CodecTest {
     }
 
     @Test
+    fun `legacy CK1 prefix still decodes`() {
+        // v1.1.0: this build writes TNP1:, but CipherKey-era CK1: envelopes
+        // must keep decoding through the identical path (auto-detected).
+        val modern = MessageEncoder.encode(message())
+        val legacy = Ck1.LEGACY_MAGIC + modern.removePrefix(Ck1.MAGIC)
+        val decoded = MessageDecoder.decode(legacy)
+        assertArrayEquals(message().keyId, decoded.keyId)
+        assertArrayEquals(message().ciphertext, decoded.ciphertext)
+        assertTrue(Ck1.isEnvelope(legacy))
+    }
+
+    @Test
+    fun `payload after either prefix is identical`() {
+        val modern = MessageEncoder.encode(message())
+        val legacy = Ck1.LEGACY_MAGIC + modern.removePrefix(Ck1.MAGIC)
+        assertEquals(
+            Ck1.envelopePayload(modern),
+            Ck1.envelopePayload(legacy),
+        )
+        assertEquals(
+            Ck1.envelopePayload("junk"),
+            null,
+        )
+    }
+
+    @Test
     fun `encoding is canonical base64url without padding`() {
         val envelope = MessageEncoder.encode(message())
-        val body = envelope.removePrefix("CK1:")
+        val body = envelope.removePrefix("TNP1:")
         assertTrue(body.isNotEmpty())
         assertEquals(-1, body.indexOf('='))
         assertEquals(-1, body.indexOf('+'))
@@ -59,7 +85,7 @@ class Ck1CodecTest {
     @Test
     fun `missing prefix is rejected`() {
         assertThrows(Ck1FormatException::class.java) {
-            MessageDecoder.decode(MessageEncoder.encode(message()).removePrefix("CK1:"))
+            MessageDecoder.decode(MessageEncoder.encode(message()).removePrefix("TNP1:"))
         }
     }
 
@@ -96,9 +122,12 @@ class Ck1CodecTest {
 
     @Test
     fun `payload just below the minimum is rejected`() {
-        // 70 bytes < 55 + 16 minimum.
+        // 70 bytes < 55 + 16 minimum. (Legacy CK1: prefix — still decoded.)
         assertThrows(Ck1FormatException::class.java) {
             MessageDecoder.decode("CK1:" + Ck1.encodeBase64Url(ByteArray(70)))
+        }
+        assertThrows(Ck1FormatException::class.java) {
+            MessageDecoder.decode("TNP1:" + Ck1.encodeBase64Url(ByteArray(70)))
         }
     }
 
@@ -117,7 +146,7 @@ class Ck1CodecTest {
         )
         assertEquals(
             com.turnypt.core.crypto.CryptoError.MalformedMessage,
-            MessageDecoder.errorOf(Ck1FormatException("missing CK1: prefix")),
+            MessageDecoder.errorOf(Ck1FormatException("missing envelope prefix")),
         )
     }
 
@@ -167,15 +196,24 @@ class Ck1CodecTest {
         assertEquals(GOLDEN_VECTOR, envelope)
     }
 
+    @Test
+    fun `golden vector decodes under the legacy prefix too`() {
+        val legacy = Ck1.LEGACY_MAGIC + GOLDEN_VECTOR.removePrefix(Ck1.MAGIC)
+        val decoded = MessageDecoder.decode(legacy)
+        assertArrayEquals(ByteArray(16) { ((it + 100) % 256).toByte() }, decoded.keyId)
+    }
+
     private companion object {
         const val ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
 
         /**
          * Cross-implementation compatibility anchor (also in docs/PROTOCOL.md).
          * Computed from the fixed inputs documented on the test above; AES-GCM
-         * is deterministic, so any conforming CK1 stack reproduces this string.
+         * is deterministic, so any conforming stack reproduces this string.
+         * v1.1.0: the body is unchanged — only the written prefix moved to
+         * TNP1: (the legacy CK1: twin is covered by the test above).
          */
         const val GOLDEN_VECTOR =
-            "CK1:AQEBAWRlZmdoaWprbG1ub3BxcnMQAAAAAwAByMnKy8zNzs_Q0dLT1NXW1wABAgMEBQYHCAkKC8sUsW5uL0eG8bhe2kE3XlxcDpO9PEBc00dLZZzZnYIjOjfyDpIIFAuNE5dTp0c"
+            "TNP1:AQEBAWRlZmdoaWprbG1ub3BxcnMQAAAAAwAByMnKy8zNzs_Q0dLT1NXW1wABAgMEBQYHCAkKC8sUsW5uL0eG8bhe2kE3XlxcDpO9PEBc00dLZZzZnYIjOjfyDpIIFAuNE5dTp0c"
     }
 }

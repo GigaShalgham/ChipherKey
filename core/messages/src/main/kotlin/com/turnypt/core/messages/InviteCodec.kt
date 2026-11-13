@@ -4,11 +4,12 @@ import com.turnypt.core.crypto.Argon2Params
 import com.turnypt.core.crypto.KdfAlgorithm
 
 /**
- * A CKS1 session invite: the public parameters two devices must share to
+ * Turnypt session invite (v1.1.0 rebrand of the CKS1 invite; the payload
+ * layout is unchanged): the public parameters two devices must share to
  * derive the same session key from a shared passphrase.
  *
  * The invite carries NO secret: keyId and salt are public values (the salt
- * already travels inside every CK1 envelope). The shared passphrase is
+ * already travels inside every envelope). The shared passphrase is
  * exchanged out of band — ideally in person — and never inside the invite.
  */
 data class SessionInvite(
@@ -26,10 +27,13 @@ data class SessionInvite(
 }
 
 /**
- * CKS1 wire format:
+ * Turnypt invite wire format (v1.1.0; previously CKS1 — the payload layout
+ * is byte-for-byte the same, so legacy CKS1 codes decode unchanged):
  *
  * ```
- * "CKS1:" + base64url(payload, unpadded)
+ * "TNS1:" + base64url(payload, unpadded)   ← written by this build
+ * "CKS1:" + the same payload               ← CipherKey-era, still decoded
+ * ```
  *
  * payload:
  *   offset  size  field
@@ -58,10 +62,14 @@ object InviteCodec {
         return Ck1.INVITE_MAGIC + Ck1.encodeBase64Url(payload)
     }
 
-    /** Strict decoder: rejects wrong prefix, non-canonical base64, unknown versions/KDFs. */
+    /**
+     * Strict decoder: rejects unknown prefixes (neither TNS1: nor the
+     * legacy CKS1:), non-canonical base64, unknown versions/KDFs.
+     */
     fun decode(text: String): SessionInvite {
-        if (!Ck1.isInvite(text)) throw Ck1FormatException("missing CKS1: prefix")
-        val payload = Ck1.decodeBase64Url(text.substring(Ck1.INVITE_MAGIC.length))
+        val payloadText = Ck1.invitePayload(text)
+            ?: throw Ck1FormatException("missing invite prefix")
+        val payload = Ck1.decodeBase64Url(payloadText)
         if (payload.size != PAYLOAD_LENGTH) throw Ck1FormatException("invite payload must be $PAYLOAD_LENGTH bytes")
 
         if ((payload[0].toInt() and 0xFF) != VERSION) {
