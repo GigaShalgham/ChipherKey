@@ -31,8 +31,8 @@ android {
         applicationId = "org.cipherkey"
         minSdk = 26
         targetSdk = 36
-        versionCode = 12
-        versionName = "0.5.2-alpha"
+        versionCode = 13
+        versionName = "0.6.0-alpha"
 
         vectorDrawables {
             useSupportLibrary = true

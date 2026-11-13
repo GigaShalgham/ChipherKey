@@ -18,6 +18,30 @@ private val Context.cipherKeyDataStore: DataStore<Preferences> by preferencesDat
 )
 
 /**
+ * v0.6.0: the user's cipher preference for NEW encryptions (text and
+ * files alike). The algorithm travels in every envelope and file header,
+ * so this is purely a SENDING choice — decryption always follows the wire
+ * and never depends on it.
+ */
+enum class CipherPreference {
+    /** Measure this device once and use the faster cipher (default). */
+    AUTO,
+
+    /** Always AES-256-GCM (hardware-accelerated on modern SoCs). */
+    AES_256_GCM,
+
+    /** Always ChaCha20-Poly1305 (constant-time, fast in pure software). */
+    CHACHA20_POLY1305,
+
+    ;
+
+    companion object {
+        fun fromName(name: String?): CipherPreference? =
+            entries.firstOrNull { it.name == name }
+    }
+}
+
+/**
  * User-facing security settings.
  *
  * Defaults come from [KeyPolicy]/[Argon2Profile]; persisted values are
@@ -34,6 +58,8 @@ data class AppSettings(
     val assistantEnabled: Boolean = false,
     /** v0.5.2: clipboard history capture (on by default; sensitive copies are never stored). */
     val clipboardHistoryEnabled: Boolean = true,
+    /** v0.6.0: cipher used for NEW encryptions (default Automatic). */
+    val preferredCipher: CipherPreference = CipherPreference.AUTO,
 )
 
 class SettingsRepository(
@@ -53,6 +79,8 @@ class SettingsRepository(
             biometricUnlockEnabled = prefs[KEY_BIOMETRIC_UNLOCK] ?: false,
             assistantEnabled = prefs[KEY_ASSISTANT_ENABLED] ?: false,
             clipboardHistoryEnabled = prefs[KEY_CLIPBOARD_HISTORY] ?: true,
+            preferredCipher = CipherPreference.fromName(prefs[KEY_PREFERRED_CIPHER])
+                ?: CipherPreference.AUTO,
         )
     }
 
@@ -95,6 +123,13 @@ class SettingsRepository(
         }
     }
 
+    /** v0.6.0: the cipher preference for new encryptions. */
+    suspend fun setPreferredCipher(preference: CipherPreference) {
+        dataStore.edit { prefs ->
+            prefs[KEY_PREFERRED_CIPHER] = preference.name
+        }
+    }
+
     /**
      * Sticky companion contact: the last contact the user encrypted for,
      * so the PROCESS_TEXT encrypt flow usually needs zero extra taps
@@ -126,6 +161,7 @@ class SettingsRepository(
         private val KEY_BIOMETRIC_UNLOCK = booleanPreferencesKey("biometric_unlock_enabled")
         private val KEY_ASSISTANT_ENABLED = booleanPreferencesKey("assistant_enabled")
         private val KEY_CLIPBOARD_HISTORY = booleanPreferencesKey("clipboard_history_enabled")
+        private val KEY_PREFERRED_CIPHER = stringPreferencesKey("preferred_cipher")
 
         /** Factory for the process-wide DataStore instance. */
         fun defaultDataStore(context: Context): DataStore<Preferences> = context.cipherKeyDataStore

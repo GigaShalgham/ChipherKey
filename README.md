@@ -29,9 +29,16 @@ When an app's selection toolbar is unavailable, the Home screen offers an
 
 - **Works with any messenger** — no server, no account, no `INTERNET`
   permission; the app contains no network code at all.
-- **Modern authenticated crypto** — AES-256-GCM (96-bit nonce, 128-bit
-  tag) with Argon2id (RFC 9106) key derivation, pinned in tests to the
-  RFC's official vector.
+- **Modern authenticated crypto** — AES-256-GCM and ChaCha20-Poly1305
+  (RFC 8439; wire id 0x02) with Argon2id (RFC 9106) key derivation,
+  each pinned in tests to the RFC's official vectors. An **Automatic**
+  mode benchmarks both once on your device and uses the faster; the
+  choice travels inside every message, so recipients always decrypt.
+- **Image encryption, native** — encrypt photos for the same contacts
+  with the same passphrase (chunk-wise-authenticated `.cki` files; one
+  64 KiB chunk in memory at a time, so any file size is safe).
+  Reachable from Quick Access, the Encrypt/Decrypt tabs (Text | Image
+  switch), the sharesheet and the floating assistant.
 - **Nothing sensitive at rest** — the passphrase is never stored; unlocked
   keys live in memory only and are wiped on lock, timeout or replacement;
   at rest only a Keystore-wrapped, device-bound **digest** verifier exists

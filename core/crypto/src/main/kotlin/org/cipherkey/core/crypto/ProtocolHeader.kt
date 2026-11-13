@@ -8,6 +8,12 @@ package org.cipherkey.core.crypto
  * The same layout is mirrored in docs/PROTOCOL.md and MUST NOT change for
  * CK1; any change requires a new protocol version.
  *
+ * v0.6.0: the cipher byte may now carry 0x01 (AES-256-GCM) or 0x02
+ * (ChaCha20-Poly1305). Both share the 12-byte nonce / 16-byte tag geometry
+ * (see [CipherAlgorithm.ck1Compatible]), so the header layout — and every
+ * existing AES envelope — is byte-for-byte unchanged. Old builds reject
+ * 0x02 with `UnsupportedAlgorithm`, the designed forward-compatible path.
+ *
  * Layout (passphrase mode), all multi-byte integers big-endian:
  *
  * ```
@@ -37,7 +43,7 @@ object ProtocolHeader {
         val kdfParams = message.argon2Params ?: throw AeadFailure(CryptoError.MalformedMessage)
         val salt = message.salt ?: throw AeadFailure(CryptoError.MalformedMessage)
         if (salt.size != Argon2KeyDerivator.SALT_LENGTH_BYTES) throw AeadFailure(CryptoError.InvalidSalt)
-        if (message.nonce.size != CipherAlgorithm.AES_256_GCM.nonceLengthBytes) throw AeadFailure(CryptoError.InvalidNonce)
+        if (message.nonce.size != message.algorithm.nonceLengthBytes) throw AeadFailure(CryptoError.InvalidNonce)
         if (message.keyId.size != ProtocolRandom.KEY_ID_LENGTH_BYTES) throw AeadFailure(CryptoError.MalformedMessage)
 
         val out = ByteArray(PASSPHRASE_HEADER_LENGTH)
@@ -62,33 +68,50 @@ object ProtocolHeader {
         if (payload.size < PASSPHRASE_HEADER_LENGTH + CipherAlgorithm.AES_256_GCM.tagLengthBytes) {
             throw AeadFailure(CryptoError.MalformedMessage)
         }
-        if ((payload[0].toInt() and 0xFF) != VERSION) {
-            throw AeadFailure(CryptoError.UnsupportedVersion(payload[0].toInt() and 0xFF))
+        val message = parseHeaderFields(payload, from = 0)
+        val ciphertext = payload.copyOfRange(PASSPHRASE_HEADER_LENGTH, payload.size)
+        if (ciphertext.size < message.algorithm.tagLengthBytes) {
+            throw AeadFailure(CryptoError.MalformedMessage)
         }
-        val mode = EncryptionMode.fromId(payload[1].toInt() and 0xFF)
-            ?: throw AeadFailure(CryptoError.UnsupportedMode(payload[1].toInt() and 0xFF))
-        val algorithm = CipherAlgorithm.fromId(payload[2].toInt() and 0xFF)
-            ?: throw AeadFailure(CryptoError.UnsupportedAlgorithm(payload[2].toInt() and 0xFF))
-        val kdf = KdfAlgorithm.fromId(payload[3].toInt() and 0xFF)
-            ?: throw AeadFailure(CryptoError.UnsupportedKdf(payload[3].toInt() and 0xFF))
+        return message.copy(ciphertext = ciphertext)
+    }
+
+    /**
+     * v0.6.0: parses ONLY the 55 header bytes at [from] (ciphertext stays
+     * empty). Shared by the CK1 envelope parser and the CKF1 file prefix
+     * (which keeps the identical 55-byte header after its 4-byte magic) —
+     * one field decoder, one validation policy.
+     */
+    fun parseHeaderFields(payload: ByteArray, from: Int): EncryptedMessage {
+        if (from < 0 || payload.size < from + PASSPHRASE_HEADER_LENGTH) {
+            throw AeadFailure(CryptoError.MalformedMessage)
+        }
+        if ((payload[from].toInt() and 0xFF) != VERSION) {
+            throw AeadFailure(CryptoError.UnsupportedVersion(payload[from].toInt() and 0xFF))
+        }
+        val mode = EncryptionMode.fromId(payload[from + 1].toInt() and 0xFF)
+            ?: throw AeadFailure(CryptoError.UnsupportedMode(payload[from + 1].toInt() and 0xFF))
+        val algorithm = CipherAlgorithm.fromId(payload[from + 2].toInt() and 0xFF)
+            ?: throw AeadFailure(CryptoError.UnsupportedAlgorithm(payload[from + 2].toInt() and 0xFF))
+        val kdf = KdfAlgorithm.fromId(payload[from + 3].toInt() and 0xFF)
+            ?: throw AeadFailure(CryptoError.UnsupportedKdf(payload[from + 3].toInt() and 0xFF))
 
         if (mode != EncryptionMode.PASSPHRASE) {
             // Reserved for the public-key provider (Phase 5); no CK1 v1
             // message may use it.
             throw AeadFailure(CryptoError.UnsupportedMode(mode.id))
         }
-        if (algorithm != CipherAlgorithm.AES_256_GCM) throw AeadFailure(CryptoError.UnsupportedAlgorithm(algorithm.id))
+        if (!algorithm.ck1Compatible) throw AeadFailure(CryptoError.UnsupportedAlgorithm(algorithm.id))
         if (kdf != KdfAlgorithm.ARGON2ID) throw AeadFailure(CryptoError.UnsupportedKdf(kdf.id))
 
-        val keyId = payload.copyOfRange(4, 20)
+        val keyId = payload.copyOfRange(from + 4, from + 20)
         val argon2Params = try {
-            Argon2Params.decode(payload.copyOfRange(20, 27))
+            Argon2Params.decode(payload.copyOfRange(from + 20, from + 27))
         } catch (e: IllegalArgumentException) {
             throw AeadFailure(CryptoError.MalformedMessage, e)
         }
-        val salt = payload.copyOfRange(27, 43)
-        val nonce = payload.copyOfRange(43, 55)
-        val ciphertext = payload.copyOfRange(55, payload.size)
+        val salt = payload.copyOfRange(from + 27, from + 43)
+        val nonce = payload.copyOfRange(from + 43, from + 55)
 
         return EncryptedMessage(
             mode = mode,
@@ -98,7 +121,7 @@ object ProtocolHeader {
             argon2Params = argon2Params,
             salt = salt,
             nonce = nonce,
-            ciphertext = ciphertext,
+            ciphertext = ByteArray(0),
         )
     }
 }

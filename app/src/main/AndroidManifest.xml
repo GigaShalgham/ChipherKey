@@ -131,6 +131,53 @@
         </activity>
 
         <!--
+          v0.6.0 image companion (docs/IMAGE-CRYPTO.md): sharesheet and
+          file-entry into the SAME image flows the in-app tabs host.
+          SEND image/* encrypts the shared image; SEND/VIEW
+          application/x-cipherkey decrypts a .cki file. FLAG_SECURE is set
+          in code; noHistory/excludeFromRecents follow the companion
+          discipline (an abandoned flow is discarded, passphrase included).
+        -->
+        <activity
+            android:name=".companion.ImageCipherActivity"
+            android:exported="true"
+            android:label="@string/image_encrypt_label"
+            android:noHistory="true"
+            android:excludeFromRecents="true"
+            android:theme="@style/Theme.CipherKey.Companion">
+            <intent-filter android:label="@string/image_encrypt_label">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter android:label="@string/image_decrypt_label">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/x-cipherkey" />
+            </intent-filter>
+            <intent-filter android:label="@string/image_decrypt_label">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" android:mimeType="application/x-cipherkey" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          v0.6.0: exposes ONLY the decrypted-image preview cache for the
+          "Share image" affordance (see res/xml/file_paths.xml).
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!--
           v0.3.0 floating assistant: a user-enabled overlay bubble with
           quick Encrypt/Decrypt-clipboard actions. Started only from the
           Settings toggle (or the auto-start after the user enabled it);

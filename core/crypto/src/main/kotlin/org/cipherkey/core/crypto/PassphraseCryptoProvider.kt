@@ -8,7 +8,9 @@ package org.cipherkey.core.crypto
  *    construction, see PROTOCOL.md for the collision-budget analysis);
  *  - serialize the canonical header and use it as associated data so that
  *    every protocol field is authenticated;
- *  - seal with AES-256-GCM.
+ *  - seal with the context's cipher — AES-256-GCM (0x01) or ChaCha20-
+ *    Poly1305 (0x02) since v0.6.0; the choice travels IN the envelope, so
+ *    decryption is independent of any local preference.
  *
  * Key derivation is NOT performed here: keys are derived once per session
  * (contact-level, Argon2id) and supplied already unwrapped. This is a
@@ -16,7 +18,7 @@ package org.cipherkey.core.crypto
  * docs/ARCHITECTURE.md.
  */
 class PassphraseCryptoProvider(
-    private val aead: AeadCipher = AesGcmAeadCipher(),
+    private val aeads: AeadCiphers = AeadCiphers(),
     private val random: ProtocolRandom = ProtocolRandom(RandomSource.SECURE),
 ) : CryptoProvider {
 
@@ -27,7 +29,7 @@ class PassphraseCryptoProvider(
         if (plaintext.size > context.maxPlaintextBytes) {
             return EncryptionResult.Failure(CryptoError.InputTooLarge)
         }
-        if (context.key.size != CipherAlgorithm.AES_256_GCM.keyLengthBytes) {
+        if (context.key.size != context.algorithm.keyLengthBytes) {
             return EncryptionResult.Failure(CryptoError.InvalidKey)
         }
         if (context.salt.size != Argon2KeyDerivator.SALT_LENGTH_BYTES) {
@@ -35,17 +37,18 @@ class PassphraseCryptoProvider(
         }
         val message = EncryptedMessage(
             mode = EncryptionMode.PASSPHRASE,
-            algorithm = CipherAlgorithm.AES_256_GCM,
+            algorithm = context.algorithm,
             kdf = KdfAlgorithm.ARGON2ID,
             keyId = context.keyId.copyOf(),
             argon2Params = context.kdfParams,
             salt = context.salt.copyOf(),
-            nonce = random.nonce(),
+            nonce = random.nonce(context.algorithm),
             ciphertext = ByteArray(0),
         )
         return try {
             val header = ProtocolHeader.serialize(message)
-            val sealed = aead.seal(context.key, message.nonce, plaintext, header)
+            val sealed = aeads.of(context.algorithm)
+                .seal(context.key, message.nonce, plaintext, header)
             EncryptionResult.Success(message.copy(ciphertext = sealed))
         } catch (e: AeadFailure) {
             EncryptionResult.Failure(e.error)
@@ -62,15 +65,16 @@ class PassphraseCryptoProvider(
         if (message.ciphertext.size > context.maxSealedBytes) {
             return fail(CryptoError.MessageTooLarge)
         }
-        if (message.ciphertext.size < CipherAlgorithm.AES_256_GCM.tagLengthBytes) {
+        if (message.ciphertext.size < message.algorithm.tagLengthBytes) {
             return fail(CryptoError.MalformedMessage)
         }
-        if (context.key.size != CipherAlgorithm.AES_256_GCM.keyLengthBytes) {
+        if (context.key.size != message.algorithm.keyLengthBytes) {
             return fail(CryptoError.InvalidKey)
         }
         return try {
             val header = ProtocolHeader.serialize(message)
-            val plaintext = aead.open(context.key, message.nonce, message.ciphertext, header)
+            val plaintext = aeads.of(message.algorithm)
+                .open(context.key, message.nonce, message.ciphertext, header)
             DecryptionResult.Success(plaintext)
         } catch (e: AeadFailure) {
             fail(e.error)

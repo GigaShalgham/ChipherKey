@@ -168,6 +168,22 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f),
                 )
             }
+            // v0.6.0: image encryption takes its place in Quick Access —
+            // not a side door (docs/IMAGE-CRYPTO.md §5).
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                QuickActionTile(
+                    label = stringResource(R.string.home_quick_encrypt_image),
+                    icon = CipherKeyIcons.Image,
+                    onClick = { onNavigate(DestinationRoute.ENCRYPT_IMAGE) },
+                    modifier = Modifier.weight(1f),
+                )
+                QuickActionTile(
+                    label = stringResource(R.string.home_quick_decrypt_image),
+                    icon = CipherKeyIcons.FileDoc,
+                    onClick = { onNavigate(DestinationRoute.DECRYPT_IMAGE) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(8.dp))

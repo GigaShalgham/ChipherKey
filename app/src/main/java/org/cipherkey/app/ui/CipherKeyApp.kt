@@ -13,6 +13,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavArgument
+import androidx.navigation.navArgument
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -85,16 +87,36 @@ fun CipherKeyApp() {
                     },
                 )
             }
-            composable(DestinationRoute.ENCRYPT) {
+            // v0.6.0: optional mode argument (text | image) — Quick Access
+            // deep-links into the image segments of both tabs.
+            composable(
+                "${DestinationRoute.ENCRYPT}?${DestinationRoute.ARG_MODE}={${DestinationRoute.ARG_MODE}}",
+                arguments = listOf(
+                    navArgument(DestinationRoute.ARG_MODE) {
+                        defaultValue = DestinationRoute.MODE_TEXT
+                    },
+                ),
+            ) { entry ->
+                val mode = entry.arguments?.getString(DestinationRoute.ARG_MODE)
                 EncryptScreen(
                     viewModel = hiltViewModel<ToolsViewModel>(),
                     biometrics = LocalBiometrics.current,
+                    initialImage = mode == DestinationRoute.MODE_IMAGE,
                 )
             }
-            composable(DestinationRoute.DECRYPT) {
+            composable(
+                "${DestinationRoute.DECRYPT}?${DestinationRoute.ARG_MODE}={${DestinationRoute.ARG_MODE}}",
+                arguments = listOf(
+                    navArgument(DestinationRoute.ARG_MODE) {
+                        defaultValue = DestinationRoute.MODE_TEXT
+                    },
+                ),
+            ) { entry ->
+                val mode = entry.arguments?.getString(DestinationRoute.ARG_MODE)
                 DecryptScreen(
                     viewModel = hiltViewModel<ToolsViewModel>(),
                     biometrics = LocalBiometrics.current,
+                    initialImage = mode == DestinationRoute.MODE_IMAGE,
                 )
             }
             composable(DestinationRoute.CONTACTS) {

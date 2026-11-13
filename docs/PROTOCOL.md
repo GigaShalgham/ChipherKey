@@ -16,6 +16,21 @@ standard base64 alphabet (`+`, `/`), embedded whitespace, payloads above
 256 KiB and any envelope whose encoded form exceeds 360,000 characters —
 all before any cryptographic work.
 
+### Cipher negotiation (v0.6.0)
+
+The cipher byte carries `0x01` (AES-256-GCM) or `0x02`
+(ChaCha20-Poly1305, RFC 8439). Both use a 96-bit nonce and a 128-bit tag,
+so the header layout below is identical for either — the field is inside
+the AAD, and the receiver picks its implementation from the wire, never
+from local settings. Adding `0x02` is a **forward-compatible extension**:
+old builds reject it with `UnsupportedAlgorithm(0x02)`, exactly the
+receiver policy below, so no version bump is required. ChaCha20-Poly1305
+runs through the BouncyCastle lightweight API (no JCA provider
+insertion), giving one implementation on every API level including the
+JVM tests. The user picks a preference (Automatic / AES / ChaCha) in
+Settings; Automatic micro-benchmarks both once per process and uses the
+faster — a sending-side choice only.
+
 ## Payload layout (passphrase mode, mode id 0x01)
 
 All multi-byte integers are big-endian. Offices are absolute byte offsets.
@@ -24,7 +39,7 @@ All multi-byte integers are big-endian. Offices are absolute byte offsets.
 offset  size  field                         notes
 0       1     protocol version              0x01
 1       1     encryption mode               0x01 = PASSPHRASE; 0x02 = PUBLIC_KEY (reserved)
-2       1     cipher algorithm id           0x01 = AES-256-GCM
+2       1     cipher algorithm id           0x01 = AES-256-GCM; 0x02 = ChaCha20-Poly1305 (v0.6.0)
 3       1     KDF algorithm id              0x01 = Argon2id (v0x13, RFC 9106)
 4       16    session key identifier        public; selects the local key era
 20      7     Argon2id parameters           exponent(1) ‖ iterations(4) ‖ parallelism(2)
@@ -143,3 +158,33 @@ Any conforming CK1 implementation must produce the identical string
 | Unknown mode / cipher / KDF id | `UnsupportedMode/Algorithm/Kdf(id)` |
 | Envelope size above limits | `MessageTooLarge` |
 | AEAD tag mismatch (incl. any header tamper) | `AuthenticationFailed` |
+
+## CKF1 — the file container (v0.6.0)
+
+Images (and any large file) travel as a **CKF1** container (extension
+`.cki`, MIME `application/x-cipherkey`) instead of a base64 envelope —
+same key era, same Argon2id passphrase, same contact. Full design:
+`docs/IMAGE-CRYPTO.md`. Layout (all integers big-endian):
+
+```
+offset size field
+0      4    magic "CKF1"
+4      55   the exact CK1 v1 header above (cipher byte included)
+59     …    sealed chunks in order, each = AEAD(chunk ‖ 16-byte tag)
+```
+
+- Chunks are 64 KiB of plaintext, sealed independently: peak memory is
+  one chunk, so file size can never OOM the process (the v0.5.1 lesson).
+- `fileKey = HKDF-SHA256(eraKey, salt = base nonce, info =
+  "CipherKey-CKF1-v1")` — every file gets its own effective key, so the
+  4-byte nonce prefix + 8-byte chunk counter below cannot collide across
+  files under one era key (the Tink streaming-AEAD argument).
+- Chunk i nonce = `baseNonce[0..4) ‖ i (8 B BE)`; chunk i AAD =
+  `prefix(59) ‖ i (8 B BE) ‖ lastFlag(1)` — header, position and
+  finality are all authenticated: reordering, splicing and truncation
+  fail.
+- The final chunk is strictly shorter than 64 KiB; exact-multiple inputs
+  get a zero-length final chunk as the truncation sentinel. A stream
+  ending without one is `FileTruncated`.
+- No `CKF1` magic at the start is `NotACipherFile`; an unknown header
+  keyId is the same `UnknownKey` as the text path.

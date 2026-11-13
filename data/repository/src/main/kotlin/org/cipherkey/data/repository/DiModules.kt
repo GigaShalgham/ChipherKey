@@ -10,8 +10,12 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.first
 import org.cipherkey.core.common.DispatcherProvider
 import org.cipherkey.core.crypto.AeadCipher
+import org.cipherkey.core.crypto.AeadCiphers
 import org.cipherkey.core.crypto.AesGcmAeadCipher
 import org.cipherkey.core.crypto.Argon2KeyDerivator
+import org.cipherkey.core.crypto.AutomaticCipherSelector
+import org.cipherkey.core.crypto.CipherAlgorithm
+import org.cipherkey.core.crypto.CkfChunkedCipher
 import org.cipherkey.core.crypto.CryptoProvider
 import org.cipherkey.core.crypto.PassphraseCryptoProvider
 import org.cipherkey.core.crypto.ProtocolRandom
@@ -22,6 +26,7 @@ import org.cipherkey.data.database.CipherKeyDatabase
 import org.cipherkey.data.database.ClipboardHistoryDao
 import org.cipherkey.data.database.ContactDao
 import org.cipherkey.data.database.SessionKeyDao
+import org.cipherkey.data.preferences.CipherPreference
 import org.cipherkey.data.preferences.SettingsRepository
 import javax.inject.Singleton
 
@@ -56,6 +61,11 @@ object CryptoModule {
 
     @Provides
     @Singleton
+    fun provideAeadCiphers(): AeadCiphers = AeadCiphers()
+
+    /** Kept for any consumer that wants THE default AEAD (AES-256-GCM). */
+    @Provides
+    @Singleton
     fun provideAeadCipher(): AeadCipher = AesGcmAeadCipher()
 
     @Provides
@@ -65,13 +75,39 @@ object CryptoModule {
     @Provides
     @Singleton
     fun provideCryptoProvider(
-        aead: AeadCipher,
+        aeads: AeadCiphers,
         random: ProtocolRandom,
-    ): CryptoProvider = PassphraseCryptoProvider(aead, random)
+    ): CryptoProvider = PassphraseCryptoProvider(aeads, random)
 
     @Provides
     @Singleton
     fun provideArgon2KeyDerivator(): Argon2KeyDerivator = Argon2KeyDerivator()
+
+    /** v0.6.0: streaming CKF1 container cipher (images / large files). */
+    @Provides
+    @Singleton
+    fun provideCkfChunkedCipher(aeads: AeadCiphers): CkfChunkedCipher =
+        CkfChunkedCipher(aeads)
+
+    /** v0.6.0: resolves the "Automatic" cipher preference by measurement. */
+    @Provides
+    @Singleton
+    fun provideAutomaticCipherSelector(aeads: AeadCiphers): AutomaticCipherSelector =
+        AutomaticCipherSelector(aeads)
+
+    /** v0.6.0: the cipher for NEW encryptions, per the user's preference. */
+    @Provides
+    @Singleton
+    fun provideCipherAlgorithmSource(
+        settings: SettingsRepository,
+        automatic: AutomaticCipherSelector,
+    ): CipherAlgorithmSource = CipherAlgorithmSource {
+        when (settings.settings.first().preferredCipher) {
+            CipherPreference.AES_256_GCM -> CipherAlgorithm.AES_256_GCM
+            CipherPreference.CHACHA20_POLY1305 -> CipherAlgorithm.CHACHA20_POLY1305
+            CipherPreference.AUTO -> automatic.select()
+        }
+    }
 
     @Provides
     @Singleton
@@ -134,6 +170,7 @@ object RepositoryModule {
         protector: org.cipherkey.core.keys.KeyProtector,
         provider: CryptoProvider,
         settings: SettingsRepository,
+        algorithmSource: CipherAlgorithmSource,
         dispatchers: DispatcherProvider,
     ): MessageCipher = MessageCipher(
         contacts = contacts,
@@ -144,6 +181,28 @@ object RepositoryModule {
         sessionTimeout = {
             settings.settings.first().sessionTimeoutMillis
         },
+        dispatchers = dispatchers,
+        algorithmSource = algorithmSource,
+    )
+
+    /** v0.6.0: the file/image facade — same eras, same sessions, same DI graph. */
+    @Provides
+    @Singleton
+    fun provideMediaCipher(
+        contacts: ContactRepository,
+        sessionKeys: SessionKeyRepository,
+        sessions: KeySessionManager,
+        chunked: CkfChunkedCipher,
+        random: ProtocolRandom,
+        algorithmSource: CipherAlgorithmSource,
+        dispatchers: DispatcherProvider,
+    ): MediaCipher = MediaCipher(
+        contacts = contacts,
+        sessionKeys = sessionKeys,
+        sessions = sessions,
+        chunked = chunked,
+        random = random,
+        algorithmSource = algorithmSource,
         dispatchers = dispatchers,
     )
 }

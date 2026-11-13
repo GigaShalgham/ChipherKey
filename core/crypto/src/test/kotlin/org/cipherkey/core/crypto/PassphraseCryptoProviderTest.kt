@@ -26,7 +26,7 @@ class PassphraseCryptoProviderTest {
     private val params = Argon2Params(16, 3, 1)
 
     private fun provider(random: ProtocolRandom = ProtocolRandom(RandomSource.SECURE)) =
-        PassphraseCryptoProvider(AesGcmAeadCipher(), random)
+        PassphraseCryptoProvider(AeadCiphers(), random)
 
     private fun context(maxPlaintext: Int = CRYPTO_MAX) = EncryptionContext(
         mode = EncryptionMode.PASSPHRASE,
@@ -127,6 +127,42 @@ class PassphraseCryptoProviderTest {
         val a = (provider(ProtocolRandom(CountingRandomSource())).encrypt("golden".toByteArray(), context()) as EncryptionResult.Success).message
         val b = (provider(ProtocolRandom(CountingRandomSource())).encrypt("golden".toByteArray(), context()) as EncryptionResult.Success).message
         assertArrayEquals(a.toByteArray(), b.toByteArray())
+    }
+
+    // ------------------------------------------------- v0.6.0 ChaCha20 mode
+
+    @Test
+    fun `chacha20-poly1305 envelope roundtrips and records the cipher`() = runTest {
+        val plaintext = "تصویر رمز شده — image payload".toByteArray()
+        val result = provider().encrypt(plaintext, context().copy(algorithm = CipherAlgorithm.CHACHA20_POLY1305))
+        assertTrue(result is EncryptionResult.Success)
+        val message = (result as EncryptionResult.Success).message
+        assertEquals(CipherAlgorithm.CHACHA20_POLY1305, message.algorithm)
+        // Decryption is independent of any preference: the wire id decides.
+        val decrypted = provider().decrypt(message, decryptContext())
+        assertTrue(decrypted is DecryptionResult.Success)
+        assertArrayEquals(plaintext, (decrypted as DecryptionResult.Success).plaintext)
+    }
+
+    @Test
+    fun `aes and chacha envelopes coexist under the same key`() = runTest {
+        val aesMessage = (provider().encrypt("via aes".toByteArray(), context()) as EncryptionResult.Success).message
+        val chachaMessage = (
+            provider().encrypt(
+                "via chacha".toByteArray(),
+                context().copy(algorithm = CipherAlgorithm.CHACHA20_POLY1305),
+            ) as EncryptionResult.Success
+            ).message
+        assertEquals(CipherAlgorithm.AES_256_GCM, aesMessage.algorithm)
+        assertEquals(CipherAlgorithm.CHACHA20_POLY1305, chachaMessage.algorithm)
+        assertArrayEquals(
+            "via aes".toByteArray(),
+            (provider().decrypt(aesMessage, decryptContext()) as DecryptionResult.Success).plaintext,
+        )
+        assertArrayEquals(
+            "via chacha".toByteArray(),
+            (provider().decrypt(chachaMessage, decryptContext()) as DecryptionResult.Success).plaintext,
+        )
     }
 
     private companion object {

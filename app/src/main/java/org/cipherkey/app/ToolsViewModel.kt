@@ -1,31 +1,48 @@
 package org.cipherkey.app
 
+import android.content.Context
+import android.net.Uri
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.File
+import java.net.URI
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.cipherkey.app.R
 import org.cipherkey.app.companion.CompanionMode
+import org.cipherkey.app.companion.ContentResolverStreams
+import org.cipherkey.app.companion.ImageFiles
 import org.cipherkey.app.security.BiometricKeyStore
 import org.cipherkey.app.security.BiometricPromptRequest
 import org.cipherkey.core.common.ContactId
 import org.cipherkey.core.common.SessionId
+import org.cipherkey.core.crypto.CipherAlgorithm
 import org.cipherkey.core.crypto.CryptoError
 import org.cipherkey.core.messages.Ck1Limits
 import org.cipherkey.core.sessions.wipe
+import org.cipherkey.data.preferences.CipherPreference
 import org.cipherkey.data.preferences.SettingsRepository
+import org.cipherkey.data.repository.CipherAlgorithmSource
 import org.cipherkey.data.repository.ClipboardHistoryEntry
 import org.cipherkey.data.repository.ClipboardHistoryRepository
 import org.cipherkey.data.repository.Contact
 import org.cipherkey.data.repository.ContactRepository
 import org.cipherkey.data.repository.DecryptOutcome
 import org.cipherkey.data.repository.EncryptOutcome
+import org.cipherkey.data.repository.MediaCipher
+import org.cipherkey.data.repository.MediaDecryptOutcome
+import org.cipherkey.data.repository.MediaEncryptOutcome
 import org.cipherkey.data.repository.MessageCipher
 import org.cipherkey.data.repository.SessionKeyRepository
 import org.cipherkey.data.repository.UnlockOutcome
@@ -34,8 +51,38 @@ import org.cipherkey.security.clipboard.ClipboardAccess
 import org.cipherkey.security.clipboard.ClipboardRead
 
 /**
+ * v0.6.0: the image the user picked for encryption (SAF or sharesheet).
+ */
+data class PickedImageSource(
+    val uriString: String,
+    val displayName: String,
+    val sizeBytes: Long?,
+)
+
+/** v0.6.0: a finished image encryption — the .cki file was streamed out. */
+data class ImageEncryptDone(
+    val outputUriString: String,
+    val displayName: String,
+    val algorithmName: String,
+    val sizeText: String,
+)
+
+/** v0.6.0: a finished image decryption — preview plus save/share target. */
+data class ImageDecryptDone(
+    val cacheFileUriString: String,
+    val suggestedName: String,
+    val mime: String?,
+    val isImage: Boolean,
+    val preview: ImageBitmap?,
+    val contactName: String,
+    val algorithmName: String,
+    val sizeText: String,
+)
+
+/**
  * State of the in-app Tools tabs (v0.3.0): manual encrypt and decrypt of
- * typed or pasted text, outside the PROCESS_TEXT companion flows.
+ * typed or pasted text, outside the PROCESS_TEXT companion flows — plus,
+ * since v0.6.0, the Text | Image segments of both tabs.
  */
 data class ToolsUiState(
     val contacts: List<Contact> = emptyList(),
@@ -75,6 +122,24 @@ data class ToolsUiState(
     val clipboardHistory: List<ClipboardHistoryEntry> = emptyList(),
     /** v0.5.2: true while the clipboard-history dialog is on screen. */
     val clipboardHistoryOpen: Boolean = false,
+
+    // ------------------------------------------------------ v0.6.0 images
+    /** The image chosen for encryption (null until picked). */
+    val pickedImage: PickedImageSource? = null,
+    /** True while a file is being encrypted or decrypted. */
+    val imageBusy: Boolean = false,
+    /** Plaintext bytes processed so far (progress line). */
+    val imageProgressBytes: Long = 0,
+    /** Total plaintext bytes, when the source advertised a size. */
+    val imageProgressTotal: Long? = null,
+    val imageEncryptResult: ImageEncryptDone? = null,
+    val imageDecryptResult: ImageDecryptDone? = null,
+    /** True after the decrypted file was saved via CreateDocument. */
+    val imageSavedAfterDecrypt: Boolean = false,
+    /** The user's cipher preference (null until loaded). */
+    val cipherPreference: CipherPreference? = null,
+    /** What that preference resolves to on THIS device (chip label). */
+    val resolvedCipherName: String? = null,
 ) {
     val selectedContact: Contact?
         get() = contacts.firstOrNull { it.id == selectedContactId }
@@ -91,6 +156,7 @@ data class ToolsUiState(
 @HiltViewModel
 class ToolsViewModel @Inject constructor(
     private val messageCipher: MessageCipher,
+    private val mediaCipher: MediaCipher,
     private val contactsRepository: ContactRepository,
     private val sessionKeys: SessionKeyRepository,
     private val settings: SettingsRepository,
@@ -98,6 +164,9 @@ class ToolsViewModel @Inject constructor(
     private val clipboardHistoryRepository: ClipboardHistoryRepository,
     private val clipboardRecorder: ClipboardHistoryRecorder,
     private val biometricStore: BiometricKeyStore,
+    private val algorithmSource: CipherAlgorithmSource,
+    private val streams: ContentResolverStreams,
+    @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ToolsUiState())
@@ -108,6 +177,17 @@ class ToolsViewModel @Inject constructor(
 
     /** The text the next encrypt/decrypt continues with after an unlock. */
     private var pendingText: String? = null
+
+    /**
+     * v0.6.0: the image operation that continues after a successful unlock
+     * (encrypt-to-target or decrypt-from-source). Takes precedence over the
+     * text continuation when set; kept across a failed unlock attempt so
+     * the user can retry with the right passphrase.
+     */
+    private var pendingImageOp: (suspend () -> Unit)? = null
+
+    /** The decrypted-image cache file owned by this ViewModel. */
+    private var decryptCacheFile: File? = null
 
     /** v0.3.0: contact unlocked most recently (biometric remember target). */
     private var lastUnlockedContactId: ContactId? = null
@@ -122,6 +202,7 @@ class ToolsViewModel @Inject constructor(
 
     init {
         refresh()
+        refreshCipherInfo()
         // v0.4.2 (deep-scan N1): lockAll(), the 60s expiry sweeper or an era
         // rotation in another surface used to leave this tab's `unlocked`
         // snapshot stale — the Encrypt button stayed up with no unlock card.
@@ -188,6 +269,7 @@ class ToolsViewModel @Inject constructor(
         }
         pendingMode = CompanionMode.ENCRYPT
         pendingText = draft
+        pendingImageOp = null
         launchSafely {
             _state.value = _state.value.copy(busy = true, notice = null)
             encryptInternal(id, draft)
@@ -202,9 +284,333 @@ class ToolsViewModel @Inject constructor(
         }
         pendingMode = CompanionMode.DECRYPT
         pendingText = envelope
+        pendingImageOp = null
         launchSafely {
             _state.value = _state.value.copy(busy = true, notice = null)
             decryptInternal(envelope)
+        }
+    }
+
+    // ------------------------------------------------------------ images (v0.6.0)
+
+    /**
+     * The user picked an image (OpenDocument / photo picker / sharesheet):
+     * record it as the encryption source. Decryption results from a
+     * previous flow are cleared so the UI tells one story at a time.
+     */
+    fun pickImage(uri: Uri, displayName: String?, sizeBytes: Long?) {
+        _state.value = _state.value.copy(
+            pickedImage = PickedImageSource(
+                uriString = uri.toString(),
+                displayName = displayName?.takeIf { it.isNotBlank() } ?: "image",
+                sizeBytes = sizeBytes,
+            ),
+            imageEncryptResult = null,
+            imageDecryptResult = null,
+            imageSavedAfterDecrypt = false,
+            notice = null,
+        )
+    }
+
+    /** Clears the picked image (and any encryption result). */
+    fun clearPickedImage() {
+        _state.value = _state.value.copy(
+            pickedImage = null,
+            imageEncryptResult = null,
+            imageProgressBytes = 0,
+            imageProgressTotal = null,
+        )
+    }
+
+    /**
+     * Streams the picked image into [outputUri] (the SAF CreateDocument
+     * target) sealed for the selected contact. A locked contact sets the
+     * SAME unlock card the text flow uses — the pending image operation
+     * resumes right after the passphrase (or fingerprint) unlocks it.
+     */
+    fun encryptImageTo(outputUri: Uri) {
+        val s = _state.value
+        val id = s.selectedContactId ?: run {
+            _state.value = s.copy(notice = UiNoticeOf(R.string.notice_no_contact_selected))
+            return
+        }
+        val source = s.pickedImage ?: run {
+            _state.value = s.copy(notice = UiNoticeOf(R.string.notice_image_pick_first))
+            return
+        }
+        val inputUri = Uri.parse(source.uriString)
+        val op: suspend () -> Unit = { encryptImageInternal(id, inputUri, outputUri) }
+        pendingImageOp = op
+        launchSafely { op() }
+    }
+
+    /**
+     * The user picked a .cki file: stream-decrypt it into a private cache
+     * file (never the gallery), then preview + save/share from there.
+     */
+    fun decryptImageFrom(uri: Uri, displayName: String?) {
+        val op: suspend () -> Unit = { decryptImageInternal(uri, displayName) }
+        pendingImageOp = op
+        launchSafely { op() }
+    }
+
+    /** Copies the decrypted cache file to the SAF CreateDocument target. */
+    fun saveDecryptedImageTo(outputUri: Uri) {
+        val result = _state.value.imageDecryptResult ?: return
+        launchSafely {
+            _state.value = _state.value.copy(busy = true, notice = null)
+            val cache = File(URI(result.cacheFileUriString))
+            val output = streams.write(outputUri)
+            if (output == null) {
+                _state.value = _state.value.copy(
+                    busy = false,
+                    notice = UiNoticeOf(R.string.notice_image_write_failed),
+                )
+                return@launchSafely
+            }
+            val copied = runCatching {
+                cache.inputStream().use { input -> output.use { input.copyTo(it) } }
+                true
+            }.getOrDefault(false)
+            _state.value = if (copied) {
+                _state.value.copy(busy = false, imageSavedAfterDecrypt = true)
+            } else {
+                _state.value.copy(
+                    busy = false,
+                    notice = UiNoticeOf(R.string.notice_image_write_failed),
+                )
+            }
+        }
+    }
+
+    /** Clears the image decrypt result and wipes its cache preview file. */
+    fun clearImageResult() {
+        decryptCacheFile?.delete()
+        decryptCacheFile = null
+        _state.value = _state.value.copy(
+            imageDecryptResult = null,
+            imageSavedAfterDecrypt = false,
+            imageBusy = false,
+            imageProgressBytes = 0,
+            imageProgressTotal = null,
+        )
+    }
+
+    /** Loads the cipher preference + what it resolves to (the chip label). */
+    fun refreshCipherInfo() {
+        launchSafely {
+            val preference = settings.settings.first().preferredCipher
+            // May run the one-time Automatic benchmark: keep it off the
+            // main thread.
+            val resolved = withContext(Dispatchers.Default) { algorithmSource.algorithm() }
+            _state.value = _state.value.copy(
+                cipherPreference = preference,
+                resolvedCipherName = displayNameOf(resolved),
+            )
+        }
+    }
+
+    /** v0.6.0: change the cipher preference (the chip and Settings share it). */
+    fun setPreferredCipher(preference: CipherPreference) {
+        launchSafely {
+            settings.setPreferredCipher(preference)
+            val resolved = withContext(Dispatchers.Default) { algorithmSource.algorithm() }
+            _state.value = _state.value.copy(
+                cipherPreference = preference,
+                resolvedCipherName = displayNameOf(resolved),
+            )
+        }
+    }
+
+    private fun displayNameOf(algorithm: CipherAlgorithm): String = when (algorithm) {
+        CipherAlgorithm.AES_256_GCM -> "AES-256-GCM"
+        CipherAlgorithm.CHACHA20_POLY1305 -> "ChaCha20-Poly1305"
+    }
+
+    private suspend fun encryptImageInternal(contactId: ContactId, inputUri: Uri, outputUri: Uri) {
+        _state.value = _state.value.copy(
+            busy = true,
+            imageBusy = true,
+            notice = null,
+            imageProgressBytes = 0,
+            imageProgressTotal = _state.value.pickedImage?.sizeBytes,
+        )
+        val input = streams.read(inputUri)
+        if (input == null) {
+            _state.value = _state.value.copy(
+                busy = false,
+                imageBusy = false,
+                notice = UiNoticeOf(R.string.notice_image_open_failed),
+            )
+            return
+        }
+        val output = streams.write(outputUri)
+        if (output == null) {
+            input.close()
+            _state.value = _state.value.copy(
+                busy = false,
+                imageBusy = false,
+                notice = UiNoticeOf(R.string.notice_image_write_failed),
+            )
+            return
+        }
+        val outcome = try {
+            mediaCipher.encryptFile(contactId, input, output) { done ->
+                _state.value = _state.value.copy(imageProgressBytes = done)
+            }
+        } finally {
+            runCatching { input.close() }
+            runCatching { output.close() }
+        }
+        when (outcome) {
+            is MediaEncryptOutcome.Encrypted -> {
+                settings.setLastContactId(contactId.value)
+                val savedName = ImageFiles.queryDisplayName(appContext, outputUri)
+                    ?: ImageFiles.suggestedEncryptedName(_state.value.pickedImage?.displayName)
+                _state.value = _state.value.copy(
+                    busy = false,
+                    imageBusy = false,
+                    imageEncryptResult = ImageEncryptDone(
+                        outputUriString = outputUri.toString(),
+                        displayName = savedName,
+                        algorithmName = displayNameOf(outcome.algorithm),
+                        sizeText = ImageFiles.formatSize(outcome.plaintextBytes),
+                    ),
+                    notice = null,
+                )
+            }
+            MediaEncryptOutcome.NeedsUnlock -> _state.value = _state.value.copy(
+                busy = false,
+                imageBusy = false,
+                unlockNeeded = true,
+                suggestPassphrase = sessionKeys.awaitingFirstPassphrase(contactId),
+                pendingContactId = contactId,
+                unlockContactName = _state.value.selectedContact?.displayName,
+            ).also { refreshBiometricOffer() }
+            MediaEncryptOutcome.NoSession -> _state.value = _state.value.copy(
+                busy = false,
+                imageBusy = false,
+                notice = UiNoticeOf(R.string.notice_no_era),
+            )
+            is MediaEncryptOutcome.Failed -> _state.value = _state.value.copy(
+                busy = false,
+                imageBusy = false,
+                notice = UiNoticeOf(R.string.notice_media_encrypt_failed, outcome.error.toString()),
+            )
+        }
+    }
+
+    private suspend fun decryptImageInternal(uri: Uri, displayName: String?) {
+        _state.value = _state.value.copy(
+            busy = true,
+            imageBusy = true,
+            notice = null,
+            imageProgressBytes = 0,
+            imageProgressTotal = null,
+        )
+        val input = streams.read(uri)
+        if (input == null) {
+            _state.value = _state.value.copy(
+                busy = false,
+                imageBusy = false,
+                notice = UiNoticeOf(R.string.notice_image_open_failed),
+            )
+            return
+        }
+        // Fresh private cache file; the previous one (if any) is wiped.
+        decryptCacheFile?.delete()
+        val cache = File(
+            appContext.cacheDir,
+            "ck_decrypt_${System.currentTimeMillis()}.bin",
+        )
+        val outcome = try {
+            cache.outputStream().use { target ->
+                mediaCipher.decryptFile(input, target) { done ->
+                    _state.value = _state.value.copy(imageProgressBytes = done)
+                }
+            }
+        } catch (e: Exception) {
+            cache.delete()
+            null
+        } finally {
+            runCatching { input.close() }
+        }
+        when (outcome) {
+            is MediaDecryptOutcome.Decrypted -> {
+                decryptCacheFile = cache
+                val mime = ImageFiles.sniffMime(cache)
+                val isImage = ImageFiles.isImageMime(mime)
+                val preview = if (isImage) {
+                    withContext(Dispatchers.Default) {
+                        ImageFiles.decodePreview(cache)?.asImageBitmap()
+                    }
+                } else {
+                    null
+                }
+                _state.value = _state.value.copy(
+                    busy = false,
+                    imageBusy = false,
+                    imageDecryptResult = ImageDecryptDone(
+                        cacheFileUriString = cache.toURI().toString(),
+                        suggestedName = ImageFiles.suggestedOriginalName(displayName),
+                        mime = mime,
+                        isImage = isImage,
+                        preview = preview,
+                        contactName = outcome.contactName,
+                        algorithmName = displayNameOf(outcome.algorithm),
+                        sizeText = ImageFiles.formatSize(outcome.plaintextBytes),
+                    ),
+                    notice = null,
+                )
+            }
+            is MediaDecryptOutcome.NeedsUnlock -> _state.value = _state.value.copy(
+                busy = false,
+                imageBusy = false,
+                unlockNeeded = true,
+                suggestPassphrase = sessionKeys.awaitingFirstPassphrase(outcome.contactId),
+                pendingContactId = outcome.contactId,
+                unlockContactName = outcome.contactName,
+                pendingEraSessionId = null,
+            ).also { refreshBiometricOffer() }
+            is MediaDecryptOutcome.NeedsEraUnlock -> _state.value = _state.value.copy(
+                busy = false,
+                imageBusy = false,
+                unlockNeeded = true,
+                suggestPassphrase = sessionKeys.awaitingFirstPassphrase(
+                    outcome.contactId,
+                    outcome.eraSessionId,
+                ),
+                pendingContactId = outcome.contactId,
+                unlockContactName = outcome.contactName,
+                pendingEraSessionId = outcome.eraSessionId,
+                // A fingerprint wrap is bound to the contact's LATEST era —
+                // it can never serve a superseded-era file.
+                biometricOffered = false,
+            )
+            MediaDecryptOutcome.NotACipherFile -> _state.value = _state.value.copy(
+                busy = false,
+                imageBusy = false,
+                notice = UiNoticeOf(R.string.notice_not_cipher_file),
+            )
+            MediaDecryptOutcome.UnknownKey -> _state.value = _state.value.copy(
+                busy = false,
+                imageBusy = false,
+                notice = UiNoticeOf(R.string.notice_unknown_key),
+            )
+            is MediaDecryptOutcome.Failed -> _state.value = _state.value.copy(
+                busy = false,
+                imageBusy = false,
+                notice = if (outcome.error == CryptoError.FileTruncated) {
+                    UiNoticeOf(R.string.notice_file_truncated)
+                } else {
+                    UiNoticeOf(R.string.notice_media_decrypt_failed)
+                },
+            )
+            null -> _state.value = _state.value.copy(
+                busy = false,
+                imageBusy = false,
+                notice = UiNoticeOf(R.string.notice_media_decrypt_failed),
+            )
         }
     }
 
@@ -219,8 +625,15 @@ class ToolsViewModel @Inject constructor(
         val id = _state.value.pendingContactId ?: _state.value.selectedContactId ?: run {
             passphrase.wipe(); return
         }
-        val text = pendingText ?: run {
-            passphrase.wipe(); return
+        // v0.6.0: an image operation pending an unlock continues INSTEAD of
+        // the text continuation (which is null in the image flows anyway).
+        val imageOp = pendingImageOp
+        val text = if (imageOp == null) {
+            pendingText ?: run {
+                passphrase.wipe(); return
+            }
+        } else {
+            null
         }
         val eraSessionId = _state.value.pendingEraSessionId
         launchSafely {
@@ -246,9 +659,14 @@ class ToolsViewModel @Inject constructor(
                             lastUnlockedContactId = id
                             offerRemember(id)
                         }
-                        when (pendingMode) {
-                            CompanionMode.ENCRYPT -> encryptInternal(id, text)
-                            CompanionMode.DECRYPT -> decryptInternal(text)
+                        if (imageOp != null) {
+                            pendingImageOp = null
+                            imageOp()
+                        } else if (text != null) {
+                            when (pendingMode) {
+                                CompanionMode.ENCRYPT -> encryptInternal(id, text)
+                                CompanionMode.DECRYPT -> decryptInternal(text)
+                            }
                         }
                     }
                     UnlockOutcome.WrongPassphrase -> _state.value = _state.value.copy(
@@ -370,11 +788,20 @@ class ToolsViewModel @Inject constructor(
                         notice = null,
                     )
                     val text = pendingText
-                    when (pendingMode) {
-                        CompanionMode.ENCRYPT ->
-                            if (text != null) encryptInternal(id, text)
-                        CompanionMode.DECRYPT ->
-                            if (text != null) decryptInternal(text)
+                    // v0.6.0: the fingerprint unlock serves image flows too
+                    // — the pending image op resumes exactly like the text
+                    // continuation does.
+                    val imageOp = pendingImageOp
+                    if (imageOp != null) {
+                        pendingImageOp = null
+                        imageOp()
+                    } else {
+                        when (pendingMode) {
+                            CompanionMode.ENCRYPT ->
+                                if (text != null) encryptInternal(id, text)
+                            CompanionMode.DECRYPT ->
+                                if (text != null) decryptInternal(text)
+                        }
                     }
                 }
                 UnlockOutcome.NoSession -> _state.value = _state.value.copy(
@@ -677,6 +1104,10 @@ class ToolsViewModel @Inject constructor(
 
     override fun onCleared() {
         pendingText = null
+        pendingImageOp = null
+        // The decrypted-image preview cache dies with the ViewModel.
+        decryptCacheFile?.delete()
+        decryptCacheFile = null
         super.onCleared()
     }
 }

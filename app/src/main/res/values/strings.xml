@@ -204,7 +204,7 @@
     <string name="kdf_profile_desc">%1$d MiB · %2$d passes</string>
     <string name="settings_about_title">About</string>
     <string name="settings_about_version">CipherKey %1$s — local-first encryption companion.</string>
-    <string name="settings_about_line2">CK1 protocol v1 · AES-256-GCM · Argon2id (RFC 9106) · Apache-2.0 license.</string>
+    <string name="settings_about_line2">CK1 protocol v1 + CKF1 files · AES-256-GCM / ChaCha20-Poly1305 · Argon2id (RFC 9106) · Apache-2.0 license.</string>
     <string name="settings_about_line3">Public-key mode (CK1 mode 0x02) is specified but not yet integrated.</string>
     <string name="state_on">On</string>
     <string name="state_off">Off</string>
@@ -273,4 +273,71 @@
     <string name="shortcut_encrypt_long">Encrypt clipboard</string>
     <string name="shortcut_decrypt_short">Decrypt</string>
     <string name="shortcut_decrypt_long">Decrypt clipboard</string>
+
+    <!-- ============================================================ v0.6.0
+         Image encryption — a native capability of the SAME contact /
+         passphrase / key-era system (docs/IMAGE-CRYPTO.md). -->
+
+    <!-- Home quick-access tiles (third row) -->
+    <string name="home_quick_encrypt_image">Encrypt image</string>
+    <string name="home_quick_decrypt_image">Decrypt image</string>
+
+    <!-- Text | Image segment switch inside the Encrypt / Decrypt tabs -->
+    <string name="segment_text">Text</string>
+    <string name="segment_image">Image</string>
+
+    <!-- Image encrypt flow -->
+    <string name="image_pick_action">Choose image</string>
+    <string name="image_pick_hint">Pick an image — it is encrypted on this device and saved as a .cki file you can send like any attachment.</string>
+    <string name="image_replace_action">Choose another image</string>
+    <string name="image_encrypt_action">Encrypt &amp; save</string>
+    <string name="image_encrypting">Encrypting…</string>
+    <string name="image_encrypt_progress">%1$s done</string>
+    <string name="image_result_title">Encrypted file — for %1$s</string>
+    <string name="image_result_saved_as">Saved as %1$s</string>
+    <string name="image_result_details">%1$s · cipher %2$s</string>
+    <string name="image_share_action">Share encrypted file</string>
+    <string name="notice_image_pick_first">Choose an image first.</string>
+
+    <!-- Image decrypt flow -->
+    <string name="image_pick_cki_action">Choose .cki file</string>
+    <string name="image_pick_cki_hint">Pick a file encrypted by CipherKey (it ends in .cki). The contact is recognized from the file itself.</string>
+    <string name="image_decrypt_action">Decrypt</string>
+    <string name="image_decrypting">Decrypting…</string>
+    <string name="image_result_decrypt_title">Decrypted — from %1$s</string>
+    <string name="image_save_action">Save image</string>
+    <string name="image_share_decrypted_action">Share image</string>
+    <string name="image_saved_ok">Saved ✓</string>
+    <string name="image_no_preview">Decrypted (%1$s) — this file type has no preview. Save it to open it.</string>
+    <string name="notice_image_open_failed">Could not open that file.</string>
+    <string name="notice_image_write_failed">Could not write the file — pick a different location and try again.</string>
+    <string name="notice_not_cipher_file">This file was not encrypted by CipherKey (no CKF1 header).</string>
+    <string name="notice_media_decrypt_failed">Decryption failed — the file is corrupted, truncated or was tampered with.</string>
+    <string name="notice_media_encrypt_failed">Encryption failed: %1$s</string>
+    <string name="notice_file_truncated">The encrypted file is incomplete (it was cut short) — ask for the full .cki file again.</string>
+
+    <!-- Cipher preference (Settings + the chip at the point of use) -->
+    <string name="settings_cipher_title">Cipher</string>
+    <string name="settings_cipher_summary">Used for NEW encryptions — messages and files alike. Received content always decrypts regardless of this choice.</string>
+    <string name="cipher_chip_label">Cipher: %1$s</string>
+    <string name="cipher_pref_auto">Automatic</string>
+    <string name="cipher_pref_auto_desc">CipherKey measures this device once and uses the faster cipher. Recommended.</string>
+    <string name="cipher_pref_aes">AES-256-GCM</string>
+    <string name="cipher_pref_aes_desc">The industry standard (TLS, full-disk encryption). Fastest on devices with a hardware AES unit — virtually all phones since ~2015.</string>
+    <string name="cipher_pref_chacha">ChaCha20-Poly1305</string>
+    <string name="cipher_pref_chacha_desc">The mobile-friendly standard (RFC 8439). Consistently fast in pure software — ideal for older devices without hardware AES.</string>
+    <string name="cipher_auto_resolved">Automatic is currently using %1$s on this device.</string>
+    <string name="cipher_dialog_title">Cipher algorithm</string>
+    <string name="cipher_explain_action">Which one should I choose?</string>
+    <string name="cipher_explain_body">Both algorithms are authenticated (AEAD) with a 256-bit key and a 128-bit tag — the security level is identical, and CipherKey decrypts either one no matter what you pick here.\n\n• AES-256-GCM shines when the processor has a hardware AES unit: nearly every phone since around 2015 does, and there it is the fastest.\n\n• ChaCha20-Poly1305 runs at full speed in pure software and resists timing side channels by design — the better fit for older or low-end hardware.\n\n• Automatic benchmarks both once on this device and switches to the faster one, so you never have to think about it.</string>
+
+    <!-- Companion image flows (sharesheet labels — keep short) -->
+    <string name="image_encrypt_label">Encrypt image (CipherKey)</string>
+    <string name="image_decrypt_label">Decrypt .cki file (CipherKey)</string>
+    <string name="image_sheet_title_encrypt">Encrypt image</string>
+    <string name="image_sheet_title_decrypt">Decrypt image file</string>
+    <string name="image_sheet_pick_cta">Choose image to encrypt</string>
+
+    <!-- Floating assistant row -->
+    <string name="assistant_encrypt_image">Encrypt image</string>
 </resources>

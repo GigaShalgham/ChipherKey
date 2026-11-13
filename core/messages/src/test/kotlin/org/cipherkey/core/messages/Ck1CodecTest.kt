@@ -2,7 +2,7 @@ package org.cipherkey.core.messages
 
 import org.cipherkey.core.crypto.Argon2Params
 import org.cipherkey.core.crypto.Argon2KeyDerivator
-import org.cipherkey.core.crypto.AesGcmAeadCipher
+import org.cipherkey.core.crypto.AeadCiphers
 import org.cipherkey.core.crypto.CipherAlgorithm
 import org.cipherkey.core.crypto.EncryptedMessage
 import org.cipherkey.core.crypto.EncryptionMode
@@ -151,7 +151,7 @@ class Ck1CodecTest {
         var counter = 0
         val random = ProtocolRandom(RandomSource { count -> ByteArray(count) { ((counter++) % 251).toByte() } })
 
-        val provider = PassphraseCryptoProvider(AesGcmAeadCipher(), random)
+        val provider = PassphraseCryptoProvider(AeadCiphers(), random)
         val result = provider.encrypt(
             "CipherKey CK1 golden vector v1".toByteArray(),
             org.cipherkey.core.crypto.EncryptionContext(

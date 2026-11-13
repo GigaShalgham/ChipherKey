@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.cipherkey.data.preferences.AppSettings
+import org.cipherkey.data.preferences.CipherPreference
 import org.cipherkey.data.preferences.SettingsRepository
 import org.cipherkey.data.repository.ClipboardHistoryRepository
 import org.cipherkey.data.repository.MessageCipher
@@ -23,6 +24,8 @@ import org.cipherkey.app.assistant.AssistantReadiness
 import org.cipherkey.app.assistant.FloatingAssistantService
 import org.cipherkey.app.security.BiometricDiagnostics
 import org.cipherkey.app.security.BiometricGate
+import org.cipherkey.core.crypto.AutomaticCipherSelector
+import org.cipherkey.core.crypto.CipherAlgorithm
 import org.cipherkey.security.policies.Argon2Profile
 
 /**
@@ -40,6 +43,7 @@ class SettingsViewModel @Inject constructor(
     private val biometrics: org.cipherkey.app.security.BiometricKeyStore,
     private val messageCipher: MessageCipher,
     private val clipboardHistory: ClipboardHistoryRepository,
+    private val automaticCipher: AutomaticCipherSelector,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context,
 ) : ViewModel() {
 
@@ -57,6 +61,13 @@ class SettingsViewModel @Inject constructor(
     /** True while the overlay permission is granted (re-checked on resume). */
     private val _overlayGranted = MutableStateFlow(false)
     val overlayGranted = _overlayGranted.asStateFlow()
+
+    /**
+     * v0.6.0: what the cipher preference currently resolves to on THIS
+     * device (the Automatic benchmark runs at most once per process).
+     */
+    private val _resolvedCipher = MutableStateFlow<CipherAlgorithm?>(null)
+    val resolvedCipher = _resolvedCipher.asStateFlow()
 
     private val _events = MutableSharedFlow<SettingsEvent>(extraBufferCapacity = 1)
     val events = _events.asSharedFlow()
@@ -87,6 +98,29 @@ class SettingsViewModel @Inject constructor(
             if (AssistantReadiness.shouldAutoStart(enabled, overlay)) {
                 runCatching { FloatingAssistantService.start(context) }
             }
+            refreshResolvedCipher()
+        }
+    }
+
+    /** v0.6.0: resolve the cipher preference (benchmark off the main thread). */
+    private fun refreshResolvedCipher() {
+        viewModelScope.launch {
+            val preference = settingsRepository.settings.first().preferredCipher
+            _resolvedCipher.value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) {
+                when (preference) {
+                    CipherPreference.AES_256_GCM -> CipherAlgorithm.AES_256_GCM
+                    CipherPreference.CHACHA20_POLY1305 -> CipherAlgorithm.CHACHA20_POLY1305
+                    CipherPreference.AUTO -> automaticCipher.select()
+                }
+            }
+        }
+    }
+
+    /** v0.6.0: change the cipher preference for new encryptions. */
+    fun setPreferredCipher(preference: CipherPreference) {
+        viewModelScope.launch {
+            settingsRepository.setPreferredCipher(preference)
+            refreshResolvedCipher()
         }
     }
 

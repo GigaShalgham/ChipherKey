@@ -36,6 +36,12 @@ data class EncryptionContext(
     val kdfParams: Argon2Params,
     /** Hard upper bound on accepted plaintext size. */
     val maxPlaintextBytes: Int,
+    /**
+     * v0.6.0: the cipher this message is sealed with. Default keeps every
+     * existing caller on AES-256-GCM — the algorithm is recorded in the
+     * envelope, so old and new messages coexist freely.
+     */
+    val algorithm: CipherAlgorithm = CipherAlgorithm.AES_256_GCM,
 ) {
     override fun equals(other: Any?): Boolean = this === other
     override fun hashCode(): Int = varargDeepHashCode(key, keyId, salt, kdfParams)

@@ -23,8 +23,14 @@ fun interface RandomSource {
 /** Generates the values the protocol needs from a [RandomSource]. */
 class ProtocolRandom(private val source: RandomSource) {
 
-    /** 96-bit AEAD nonce. Statistically unique per key; see PROTOCOL.md. */
-    fun nonce(): ByteArray = source.nextBytes(CipherAlgorithm.AES_256_GCM.nonceLengthBytes)
+    /**
+     * 96-bit AEAD nonce. Statistically unique per key; see PROTOCOL.md.
+     * v0.6.0: sized by the target [algorithm] (every CK1 v1 cipher uses
+     * 96 bits today; the parameter keeps the generator honest if that
+     * ever changes).
+     */
+    fun nonce(algorithm: CipherAlgorithm = CipherAlgorithm.AES_256_GCM): ByteArray =
+        source.nextBytes(algorithm.nonceLengthBytes)
 
     /** 128-bit Argon2id salt; one per passphrase-derived session key. */
     fun salt(): ByteArray = source.nextBytes(Argon2KeyDerivator.SALT_LENGTH_BYTES)

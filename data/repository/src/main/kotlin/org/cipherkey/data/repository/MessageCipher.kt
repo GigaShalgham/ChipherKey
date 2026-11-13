@@ -119,6 +119,9 @@ class MessageCipher(
     private val provider: CryptoProvider,
     private val sessionTimeout: SessionTimeoutSource,
     private val dispatchers: DispatcherProvider,
+    /** v0.6.0: the cipher for new TEXT envelopes (default keeps AES-256-GCM). */
+    private val algorithmSource: CipherAlgorithmSource =
+        CipherAlgorithmSource { org.cipherkey.core.crypto.CipherAlgorithm.AES_256_GCM },
 ) {
 
     /**
@@ -240,6 +243,7 @@ class MessageCipher(
                     salt = era.salt,
                     kdfParams = era.params,
                     maxPlaintextBytes = Ck1Limits.MAX_PLAINTEXT_BYTES,
+                    algorithm = algorithmSource.algorithm(),
                 ),
             )) {
                 is EncryptionResult.Success -> EncryptOutcome.Encrypted(MessageEncoder.encode(result.message))

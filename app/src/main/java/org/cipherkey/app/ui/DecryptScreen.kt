@@ -1,5 +1,8 @@
 package org.cipherkey.app.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,35 +29,37 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.cipherkey.app.R
 import org.cipherkey.app.ToolsViewModel
+import org.cipherkey.app.companion.ImageFiles
 import org.cipherkey.app.security.BiometricKeyStore
 import org.cipherkey.app.security.BiometricPromptHost
-import org.cipherkey.app.security.BiometricPromptRequest
 import org.cipherkey.app.security.rememberBiometricPromptHelper
+import org.cipherkey.core.crypto.Ckf1
 import org.cipherkey.core.messages.Ck1
 
 /**
- * In-app Decrypt tab (v0.3.0): paste a CK1:… message and read its original
- * text. Auto-detects envelopes, auto-resolves the contact from the keyId,
- * and offers passphrase or fingerprint unlock.
+ * In-app Decrypt tab (v0.3.0; v0.6.0 adds the Text | Image segments):
+ * paste a CK1:… message OR pick a .cki file — auto-detection, contact
+ * resolution, passphrase and fingerprint unlock all behave identically
+ * in both directions.
  */
 @Composable
 fun DecryptScreen(
     viewModel: ToolsViewModel,
     biometrics: BiometricKeyStore,
+    initialImage: Boolean = false,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val promptHelper = rememberBiometricPromptHelper(biometrics)
     // v0.4.2 (deep-scan): rememberSaveable — a rotation used to wipe the
     // pasted envelope. (Passphrase fields are deliberately NOT saved.)
     var input by rememberSaveable { mutableStateOf("") }
+    // v0.6.0: Text | Image segment; the Home tile deep-links into Image.
+    var imageSegment by rememberSaveable { mutableStateOf(initialImage) }
 
     LaunchedEffect(Unit) { viewModel.refresh() }
-    // The Remember prompt's key export is awaited INSIDE the host's effect
-    // (deep-scan F1) — never pre-loaded into composition state.
     BiometricPromptHost(
         helper = promptHelper,
         request = state.biometricPrompt,
@@ -64,6 +69,27 @@ fun DecryptScreen(
     )
 
     val envelopeDetected = remember(input) { Ck1.isEnvelope(input.trim()) }
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    // v0.6.0: pick the .cki file to decrypt (SAF; also accepts the rare
+    // provider that labels our mime correctly).
+    val pickCki = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            viewModel.decryptImageFrom(
+                uri,
+                ImageFiles.queryDisplayName(context, uri),
+            )
+        }
+    }
+    // v0.6.0: where the decrypted image is saved (SAF CreateDocument).
+    val saveImage = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("image/*"),
+    ) { uri ->
+        if (uri != null) viewModel.saveDecryptedImageTo(uri)
+    }
 
     Column(
         modifier = Modifier
@@ -77,38 +103,68 @@ fun DecryptScreen(
             subtitle = stringResource(R.string.decrypt_subtitle),
         )
 
+        ToolSegmentRow(
+            imageSelected = imageSegment,
+            onTextSelected = { imageSegment = false },
+            onImageSelected = { imageSegment = true },
+        )
+
         BusyLine(visible = state.busy)
 
-        SectionCard(
-            title = stringResource(R.string.decrypt_input_label),
-            icon = CipherKeyIcons.LockOpen,
-        ) {
-            OutlinedTextField(
-                value = input,
-                onValueChange = { input = it },
-                placeholder = { Text(stringResource(R.string.decrypt_input_hint)) },
-                minLines = 3,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (envelopeDetected) {
-                Text(
-                    stringResource(R.string.decrypt_ck1_detected),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium,
+        if (!imageSegment) {
+            // ------------------------------------------------------ TEXT
+            SectionCard(
+                title = stringResource(R.string.decrypt_input_label),
+                icon = CipherKeyIcons.LockOpen,
+            ) {
+                OutlinedTextField(
+                    value = input,
+                    onValueChange = { input = it },
+                    placeholder = { Text(stringResource(R.string.decrypt_input_hint)) },
+                    minLines = 3,
+                    modifier = Modifier.fillMaxWidth(),
                 )
+                if (envelopeDetected) {
+                    Text(
+                        stringResource(R.string.decrypt_ck1_detected),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium,
+                    )
+                }
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(onClick = {
+                        viewModel.pasteIntoInput { input = it }
+                    }) {
+                        Text(stringResource(R.string.action_paste))
+                    }
+                    // v0.5.2: the clipboard history — tap an entry to insert.
+                    OutlinedButton(onClick = viewModel::openClipboardHistory) {
+                        Text(stringResource(R.string.action_view_clipboard))
+                    }
+                }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(onClick = {
-                    viewModel.pasteIntoInput { input = it }
-                }) {
-                    Text(stringResource(R.string.action_paste))
-                }
-                // v0.5.2: the clipboard history ("things you copied and
-                // had copied before") — tap an entry to insert it.
-                OutlinedButton(onClick = viewModel::openClipboardHistory) {
-                    Text(stringResource(R.string.action_view_clipboard))
-                }
+        } else {
+            // ------------------------------------------------------ IMAGE
+            SectionCard(
+                title = stringResource(R.string.segment_image),
+                icon = CipherKeyIcons.FileDoc,
+            ) {
+                Text(
+                    stringResource(R.string.image_pick_cki_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Button(
+                    onClick = {
+                        pickCki.launch(
+                            arrayOf(Ckf1.MIME_TYPE, "image/*", "application/octet-stream"),
+                        )
+                    },
+                    enabled = !state.imageBusy,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(stringResource(R.string.image_pick_cki_action)) }
+                ImageProgressLine(state)
             }
         }
 
@@ -121,7 +177,8 @@ fun DecryptScreen(
                 icon = CipherKeyIcons.People,
             ) {
                 // v0.4.0: old-key-era envelopes ask for the passphrase of the
-                // era they were sent under — which may predate the current one.
+                // era they were sent under — which may predate the current
+                // one. v0.6.0: .cki files of superseded eras behave the same.
                 Text(
                     stringResource(
                         if (state.pendingEraSessionId != null) {
@@ -151,7 +208,7 @@ fun DecryptScreen(
                     ) { Text(stringResource(R.string.use_fingerprint)) }
                 }
             }
-        } else {
+        } else if (!imageSegment) {
             Button(
                 onClick = { viewModel.decrypt(input) },
                 enabled = !state.busy,
@@ -175,21 +232,43 @@ fun DecryptScreen(
             )
         }
 
-        state.resultText?.takeIf { !state.resultIsEnvelope }?.let { plaintext ->
-            SectionCard(
-                title = stringResource(
-                    R.string.result_decrypted_from,
-                    state.resultContactName ?: "",
-                ),
-            ) {
-                ResultBlock(
-                    text = plaintext,
-                    monospace = false,
-                    copied = state.copied,
-                    onCopy = viewModel::copyResult,
-                    onClear = viewModel::clearResult,
-                )
+        if (!imageSegment) {
+            state.resultText?.takeIf { !state.resultIsEnvelope }?.let { plaintext ->
+                SectionCard(
+                    title = stringResource(
+                        R.string.result_decrypted_from,
+                        state.resultContactName ?: "",
+                    ),
+                ) {
+                    ResultBlock(
+                        text = plaintext,
+                        monospace = false,
+                        copied = state.copied,
+                        onCopy = viewModel::copyResult,
+                        onClear = viewModel::clearResult,
+                    )
+                }
             }
+        } else {
+            DecryptedImageCard(
+                state = state,
+                onSave = {
+                    state.imageDecryptResult?.let { result ->
+                        saveImage.launch(result.suggestedName)
+                    }
+                },
+                onShare = {
+                    state.imageDecryptResult?.let { result ->
+                        ImageShare.cacheFile(
+                            context,
+                            result.cacheFileUriString,
+                            result.mime ?: "application/octet-stream",
+                            context.getString(R.string.image_share_decrypted_action),
+                        )
+                    }
+                },
+                onClear = viewModel::clearImageResult,
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))

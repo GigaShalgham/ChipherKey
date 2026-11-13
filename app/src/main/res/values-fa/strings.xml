@@ -195,7 +195,7 @@
     <string name="kdf_profile_desc">%1$d مبی‌بایت · %2$d گذر</string>
     <string name="settings_about_title">درباره</string>
     <string name="settings_about_version">CipherKey %1$s — همراهِ رمزنگاری local-first.</string>
-    <string name="settings_about_line2">پروتکل CK1 نسخهٔ ۱ · AES-256-GCM · Argon2id (RFC 9106) · مجوز Apache-2.0.</string>
+    <string name="settings_about_line2">پروتکل CK1 نسخهٔ ۱ + فایل‌های CKF1 · AES-256-GCM / ChaCha20-Poly1305 · Argon2id (RFC 9106) · مجوز Apache-2.0.</string>
     <string name="settings_about_line3">حالت کلید عمومی (حالت 0x02 در CK1) مشخص شده اما هنوز یکپارچه نشده است.</string>
     <string name="state_on">روشن</string>
     <string name="state_off">خاموش</string>
@@ -261,4 +261,71 @@
     <string name="shortcut_encrypt_long">رمزنگاری کلیپ‌بورد</string>
     <string name="shortcut_decrypt_short">رمزگشایی</string>
     <string name="shortcut_decrypt_long">رمزگشایی کلیپ‌بورد</string>
+
+    <!-- ============================================== v0.6.0: رمزنگاری تصویر
+         قابلیتی بومی در همان سیستم مخاطب / پسورد اشتراکی / دورۀ کلید
+         (docs/IMAGE-CRYPTO.md). -->
+
+    <!-- کاشی‌های دسترسی سریع صفحهٔ خانه (ردیف سوم) -->
+    <string name="home_quick_encrypt_image">رمزنگاری تصویر</string>
+    <string name="home_quick_decrypt_image">رمزگشایی تصویر</string>
+
+    <!-- کلید بخش‌بندی متن | تصویر داخل تب‌های رمزنگاری و رمزگشایی -->
+    <string name="segment_text">متن</string>
+    <string name="segment_image">تصویر</string>
+
+    <!-- جریان رمزنگاری تصویر -->
+    <string name="image_pick_action">انتخاب تصویر</string>
+    <string name="image_pick_hint">یک تصویر انتخاب کنید — روی همین دستگاه رمزنگاری می‌شود و به‌صورت فایل ‎.cki ذخیره می‌گردد که مثل هر پیوست دیگری قابل ارسال است.</string>
+    <string name="image_replace_action">انتخاب تصویر دیگر</string>
+    <string name="image_encrypt_action">رمزنگاری و ذخیره</string>
+    <string name="image_encrypting">در حال رمزنگاری…</string>
+    <string name="image_encrypt_progress">%1$s انجام شد</string>
+    <string name="image_result_title">فایل رمزشده — برای %1$s</string>
+    <string name="image_result_saved_as">با نام %1$s ذخیره شد</string>
+    <string name="image_result_details">%1$s · الگوریتم %2$s</string>
+    <string name="image_share_action">اشتراک فایل رمزشده</string>
+    <string name="notice_image_pick_first">اول یک تصویر انتخاب کنید.</string>
+
+    <!-- جریان رمزگشایی تصویر -->
+    <string name="image_pick_cki_action">انتخاب فایل ‎.cki</string>
+    <string name="image_pick_cki_hint">فایلی را که CipherKey رمزنگاری کرده (پسوند ‎.cki) انتخاب کنید. مخاطب از روی خود فایل شناسایی می‌شود.</string>
+    <string name="image_decrypt_action">رمزگشایی</string>
+    <string name="image_decrypting">در حال رمزگشایی…</string>
+    <string name="image_result_decrypt_title">رمزگشایی شد — از %1$s</string>
+    <string name="image_save_action">ذخیره تصویر</string>
+    <string name="image_share_decrypted_action">اشتراک تصویر</string>
+    <string name="image_saved_ok">ذخیره شد ✓</string>
+    <string name="image_no_preview">رمزگشایی شد (%1$s) — برای این نوع فایل پیش‌نمایش وجود ندارد. ذخیره‌اش کنید تا بازش کنید.</string>
+    <string name="notice_image_open_failed">آن فایل باز نشد.</string>
+    <string name="notice_image_write_failed">نوشتن فایل ممکن نشد — محل دیگری انتخاب کنید و دوباره امتحان کنید.</string>
+    <string name="notice_not_cipher_file">این فایل با CipherKey رمزنگاری نشده است (هدر CKF1 ندارد).</string>
+    <string name="notice_media_decrypt_failed">رمزگشایی ناموفق بود — فایل خراب، ناقص یا دستکاری‌شده است.</string>
+    <string name="notice_media_encrypt_failed">رمزنگاری ناموفق بود: %1$s</string>
+    <string name="notice_file_truncated">فایل رمزشده کامل نیست (جای‌مانده) — فایل کامل ‎.cki را دوباره دریافت کنید.</string>
+
+    <!-- ترجیح الگوریتم (تنظیمات + چیپ محل استفاده) -->
+    <string name="settings_cipher_title">الگوریتم رمزنگاری</string>
+    <string name="settings_cipher_summary">برای رمزنگاری‌های جدید به کار می‌رود — هم پیام‌ها و هم فایل‌ها. محتوای دریافتی فارغ از این انتخاب همیشه رمزگشایی می‌شود.</string>
+    <string name="cipher_chip_label">الگوریتم: %1$s</string>
+    <string name="cipher_pref_auto">خودکار</string>
+    <string name="cipher_pref_auto_desc">‏CipherKey یک‌بار سرعت این دستگاه را می‌سنجد و الگوریتم سریع‌تر را برمی‌گزیند. پیشنهاد ما.</string>
+    <string name="cipher_pref_aes">AES-256-GCM</string>
+    <string name="cipher_pref_aes_desc">استاندارد صنعت (‏TLS، رمزنگاری کامل دیسک). روی دستگاه‌های دارای واحد سخت‌افزاری AES سریع‌ترین است — تقریباً همهٔ گوشی‌های از حدود ۲۰۱۵ به بعد.</string>
+    <string name="cipher_pref_chacha">ChaCha20-Poly1305</string>
+    <string name="cipher_pref_chacha_desc">استاندارد مناسب موبایل (‏RFC 8439). در نرم‌افزار خالص همیشه سریع است — برای دستگاه‌های قدیمی‌تر بدون سخت‌افزار AES ایده‌آل.</string>
+    <string name="cipher_auto_resolved">حالت خودکار در حال حاضر روی این دستگاه از %1$s استفاده می‌کند.</string>
+    <string name="cipher_dialog_title">الگوریتم رمزنگاری</string>
+    <string name="cipher_explain_action">کدام را انتخاب کنم؟</string>
+    <string name="cipher_explain_body">هر دو الگوریتم احراز اصالت‌دار (AEAD) با کلید ۲۵۶ بیتی و برچسب ۱۲۸ بیتی‌اند — سطح امنیت یکسان است و CipherKey فارغ از این انتخاب، هر دو را رمزگشایی می‌کند.\n\n• ‏AES-256-GCM وقتی می‌درخشد که پردازنده واحد سخت‌افزاری AES داشته باشد؛ تقریباً همهٔ گوشی‌ها از حدود ۲۰۱۵ دارند و در آن‌ها سریع‌ترین است.\n\n• ‏ChaCha20-Poly1305 در نرم‌افزار خالص با سرعت کامل اجرا می‌شود و ذاتاً در برابر حمله‌های زمانی مقاوم است — انتخاب بهتر برای سخت‌افزارهای قدیمی یا ضعیف.\n\n• حالت خودکار هر دو را یک‌بار روی همین دستگاه می‌سنجد و به سریع‌تر سوئیچ می‌کند تا شما لازم نباشد به آن فکر کنید.</string>
+
+    <!-- جریان‌های تصویری کامپنیون (برچسب‌های اشتراک — کوتاه) -->
+    <string name="image_encrypt_label">رمزنگاری تصویر (CipherKey)</string>
+    <string name="image_decrypt_label">رمزگشایی فایل ‎.cki (CipherKey)</string>
+    <string name="image_sheet_title_encrypt">رمزنگاری تصویر</string>
+    <string name="image_sheet_title_decrypt">رمزگشایی فایل تصویر</string>
+    <string name="image_sheet_pick_cta">انتخاب تصویر برای رمزنگاری</string>
+
+    <!-- ردیف دستیار شناور -->
+    <string name="assistant_encrypt_image">رمزنگاری تصویر</string>
 </resources>

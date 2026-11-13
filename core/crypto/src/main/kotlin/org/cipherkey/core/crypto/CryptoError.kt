@@ -41,4 +41,13 @@ sealed class CryptoError(open val message: String) {
 
     /** The encoded message exceeds the maximum permitted envelope size. */
     data object MessageTooLarge : CryptoError("Message too large")
+
+    /**
+     * v0.6.0 (CKF1): the sealed chunk stream ended without a final chunk —
+     * the file was cut short after the last full-size chunk.
+     */
+    data object FileTruncated : CryptoError("Encrypted file is truncated")
+
+    /** v0.6.0 (CKF1): the input does not start with the CKF1 magic. */
+    data object NotACipherFile : CryptoError("Not a CipherKey encrypted file")
 }

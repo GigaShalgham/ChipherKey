@@ -18,11 +18,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -40,6 +44,8 @@ import org.cipherkey.app.SettingsViewModel
 import org.cipherkey.app.security.BiometricDiagnostics
 import org.cipherkey.app.security.BiometricGate
 import org.cipherkey.app.companion.UiNotice
+import org.cipherkey.core.crypto.CipherAlgorithm
+import org.cipherkey.data.preferences.CipherPreference
 import org.cipherkey.security.policies.Argon2Profile
 import org.cipherkey.security.policies.KeyPolicy
 
@@ -224,6 +230,54 @@ fun SettingsScreen(
                 onClick = { contactsViewModel.lockAll() },
                 modifier = Modifier.heightIn(min = 40.dp),
             ) { Text(stringResource(R.string.lock_now)) }
+
+            // -------------------------------------------- cipher (v0.6.0)
+            Text(
+                stringResource(R.string.settings_cipher_title),
+                style = MaterialTheme.typography.titleSmall,
+            )
+            val resolvedCipher by viewModel.resolvedCipher.collectAsStateWithLifecycle()
+            val cipherPreferenceLabel = when (settings.preferredCipher) {
+                CipherPreference.AUTO -> stringResource(R.string.cipher_pref_auto)
+                CipherPreference.AES_256_GCM -> stringResource(R.string.cipher_pref_aes)
+                CipherPreference.CHACHA20_POLY1305 -> stringResource(R.string.cipher_pref_chacha)
+            }
+            var cipherDialogOpen by remember { mutableStateOf(false) }
+            Surface(
+                onClick = { cipherDialogOpen = true },
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                shape = MaterialTheme.shapes.small,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    modifier = Modifier.padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                ) {
+                    Text(
+                        cipherPreferenceLabel,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        stringResource(R.string.settings_cipher_summary),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            if (cipherDialogOpen) {
+                CipherPreferenceDialog(
+                    current = settings.preferredCipher,
+                    autoResolvedName = resolvedCipher?.let { algorithm ->
+                        if (algorithm == CipherAlgorithm.AES_256_GCM) {
+                            stringResource(R.string.cipher_pref_aes)
+                        } else {
+                            stringResource(R.string.cipher_pref_chacha)
+                        }
+                    },
+                    onSelect = viewModel::setPreferredCipher,
+                    onDismiss = { cipherDialogOpen = false },
+                )
+            }
         }
 
         // ------------------------------------------------ KDF strength

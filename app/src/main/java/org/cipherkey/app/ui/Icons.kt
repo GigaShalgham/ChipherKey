@@ -128,6 +128,18 @@ object CipherKeyIcons {
         "M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z",
     )
 
+    /** v0.6.0: image encryption flows (Material "Image" glyph). */
+    val Image = icon(
+        "Image",
+        "M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z",
+    )
+
+    /** v0.6.0: the .cki container file (Material "Description" glyph). */
+    val FileDoc = icon(
+        "FileDoc",
+        "M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z",
+    )
+
     /**
      * Builds one 24x24 image vector from SVG path data — the same technique
      * the original v0.3.0 build used, so the app needs no icon library.

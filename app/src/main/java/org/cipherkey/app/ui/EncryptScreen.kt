@@ -1,5 +1,8 @@
 package org.cipherkey.app.ui
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,24 +27,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.cipherkey.app.R
 import org.cipherkey.app.ToolsViewModel
+import org.cipherkey.app.companion.ImageFiles
 import org.cipherkey.app.security.BiometricKeyStore
 import org.cipherkey.app.security.BiometricPromptHost
-import org.cipherkey.app.security.BiometricPromptRequest
 import org.cipherkey.app.security.rememberBiometricPromptHelper
+import org.cipherkey.core.crypto.Ckf1
 
 /**
- * In-app Encrypt tab (v0.3.0): type or paste a message, pick a contact,
- * encrypt — for apps where neither the selection toolbar nor the sharesheet
- * reaches the text. All crypto runs through the shared ToolsViewModel.
+ * In-app Encrypt tab (v0.3.0; v0.6.0 adds the Text | Image segments):
+ * type or paste a message OR pick an image, pick a contact, encrypt — for
+ * apps where neither the selection toolbar nor the sharesheet reaches the
+ * content. All crypto runs through the shared ToolsViewModel.
  */
 @Composable
 fun EncryptScreen(
     viewModel: ToolsViewModel,
     biometrics: BiometricKeyStore,
+    initialImage: Boolean = false,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val promptHelper = rememberBiometricPromptHelper(biometrics)
@@ -49,6 +54,9 @@ fun EncryptScreen(
     // typed draft. (Passphrase fields are deliberately NOT saved: view-state
     // must never hold a passphrase longer than the interaction itself.)
     var input by rememberSaveable { mutableStateOf("") }
+    // v0.6.0: Text | Image segment; the Home tile deep-links into Image.
+    var imageSegment by rememberSaveable { mutableStateOf(initialImage) }
+    var cipherDialogOpen by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { viewModel.refresh() }
     // The Remember prompt's key export is awaited INSIDE the host's effect
@@ -60,6 +68,28 @@ fun EncryptScreen(
         onUnlock = viewModel::onBiometricUnlockResult,
         onRememberDone = viewModel::onRememberDone,
     )
+
+    val context = androidx.compose.ui.platform.LocalContext.current
+
+    // v0.6.0: pick the image to encrypt (SAF — no storage permission).
+    val pickImage = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            viewModel.pickImage(
+                uri,
+                ImageFiles.queryDisplayName(context, uri),
+                ImageFiles.querySize(context, uri),
+            )
+        }
+    }
+    // v0.6.0: where the .cki lands (SAF CreateDocument — user picks the
+    // location; nothing is written without this explicit target).
+    val createCki = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument(Ckf1.MIME_TYPE),
+    ) { uri ->
+        if (uri != null) viewModel.encryptImageTo(uri)
+    }
 
     Column(
         modifier = Modifier
@@ -73,6 +103,12 @@ fun EncryptScreen(
             subtitle = stringResource(R.string.encrypt_subtitle),
         )
 
+        ToolSegmentRow(
+            imageSelected = imageSegment,
+            onTextSelected = { imageSegment = false },
+            onImageSelected = { imageSegment = true },
+        )
+
         BusyLine(visible = state.busy)
 
         if (state.contacts.isEmpty()) {
@@ -81,7 +117,8 @@ fun EncryptScreen(
                 title = stringResource(R.string.contacts_empty_title),
                 body = stringResource(R.string.contacts_empty_body),
             )
-        } else {
+        } else if (!imageSegment) {
+            // ------------------------------------------------------ TEXT
             SectionCard(
                 title = stringResource(R.string.tools_input_label),
                 icon = CipherKeyIcons.Lock,
@@ -106,31 +143,76 @@ fun EncryptScreen(
                     }
                 }
             }
-
+        } else {
+            // ------------------------------------------------------ IMAGE
             SectionCard(
-                title = stringResource(R.string.encrypt_contact_label),
-                icon = CipherKeyIcons.People,
+                title = stringResource(R.string.segment_image),
+                icon = CipherKeyIcons.Image,
             ) {
-                ContactPicker(
-                    contacts = state.contacts,
-                    selectedContactId = state.selectedContactId,
-                    unlocked = state.unlocked,
-                    onContactSelected = viewModel::selectContact,
+                Text(
+                    stringResource(R.string.image_pick_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (state.selectedContact != null && state.selectedContactId !in state.unlocked) {
-                    UnlockCard(
-                        state = state,
-                        onSubmit = viewModel::unlockAndContinue,
-                        onUseFingerprint = viewModel::requestBiometricUnlock,
-                        onCopyPassphrase = viewModel::copyPassphrase,
+                if (state.pickedImage != null) {
+                    PickedImageCard(
+                        displayName = state.pickedImage!!.displayName,
+                        sizeBytes = state.pickedImage!!.sizeBytes,
+                        busy = state.imageBusy,
+                        onReplace = { pickImage.launch(arrayOf("image/*")) },
                     )
                 } else {
                     Button(
-                        onClick = { viewModel.encrypt(input) },
-                        enabled = !state.busy,
+                        onClick = { pickImage.launch(arrayOf("image/*")) },
+                        enabled = !state.imageBusy,
                         modifier = Modifier.fillMaxWidth(),
-                    ) { Text(stringResource(R.string.encrypt_action)) }
+                    ) { Text(stringResource(R.string.image_pick_action)) }
                 }
+                ImageProgressLine(state)
+            }
+        }
+
+        SectionCard(
+            title = stringResource(R.string.encrypt_contact_label),
+            icon = CipherKeyIcons.People,
+        ) {
+            ContactPicker(
+                contacts = state.contacts,
+                selectedContactId = state.selectedContactId,
+                unlocked = state.unlocked,
+                onContactSelected = viewModel::selectContact,
+            )
+            if (state.selectedContact != null && state.selectedContactId !in state.unlocked) {
+                UnlockCard(
+                    state = state,
+                    onSubmit = viewModel::unlockAndContinue,
+                    onUseFingerprint = viewModel::requestBiometricUnlock,
+                    onCopyPassphrase = viewModel::copyPassphrase,
+                )
+            } else if (!imageSegment) {
+                Button(
+                    onClick = { viewModel.encrypt(input) },
+                    enabled = !state.busy,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(stringResource(R.string.encrypt_action)) }
+            } else {
+                if (state.pickedImage != null) {
+                    CipherChip(
+                        preference = state.cipherPreference,
+                        resolvedName = state.resolvedCipherName,
+                        onClick = { cipherDialogOpen = true },
+                    )
+                }
+                Button(
+                    onClick = {
+                        val name = ImageFiles.suggestedEncryptedName(
+                            state.pickedImage?.displayName,
+                        )
+                        createCki.launch(name)
+                    },
+                    enabled = !state.busy && state.pickedImage != null,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(stringResource(R.string.image_encrypt_action)) }
             }
         }
 
@@ -150,26 +232,54 @@ fun EncryptScreen(
             )
         }
 
-        state.resultText?.takeIf { state.resultIsEnvelope }?.let { envelope ->
-            SectionCard(
-                title = stringResource(
-                    R.string.result_encrypted_for,
-                    state.resultContactName ?: "",
-                ),
-            ) {
-                ResultBlock(
-                    text = envelope,
-                    monospace = true,
-                    copied = state.copied,
-                    onCopy = viewModel::copyResult,
-                    onClear = viewModel::clearResult,
-                )
-                Text(
-                    stringResource(R.string.envelope_truncated_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        if (!imageSegment) {
+            state.resultText?.takeIf { state.resultIsEnvelope }?.let { envelope ->
+                SectionCard(
+                    title = stringResource(
+                        R.string.result_encrypted_for,
+                        state.resultContactName ?: "",
+                    ),
+                ) {
+                    ResultBlock(
+                        text = envelope,
+                        monospace = true,
+                        copied = state.copied,
+                        onCopy = viewModel::copyResult,
+                        onClear = viewModel::clearResult,
+                    )
+                    Text(
+                        stringResource(R.string.envelope_truncated_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
+        } else {
+            EncryptedFileCard(
+                state = state,
+                onShare = {
+                    state.imageEncryptResult?.let { result ->
+                        ImageShare.uri(
+                            context,
+                            Uri.parse(result.outputUriString),
+                            Ckf1.MIME_TYPE,
+                            context.getString(R.string.image_share_action),
+                        )
+                    }
+                },
+                onClear = viewModel::clearPickedImage,
+            )
+        }
+
+        if (cipherDialogOpen) {
+            CipherPreferenceDialog(
+                current = state.cipherPreference ?: org.cipherkey.data.preferences.CipherPreference.AUTO,
+                autoResolvedName = state.resolvedCipherName,
+                onSelect = { preference ->
+                    viewModel.setPreferredCipher(preference)
+                },
+                onDismiss = { cipherDialogOpen = false },
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))

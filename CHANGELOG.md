@@ -7,6 +7,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0-alpha] - 2026-11-13 — image encryption, native; ChaCha20-Poly1305; Automatic cipher
+
+The headline: **image encryption is no longer a side feature — it is part
+of the CipherKey ecosystem.** Same contacts, same key eras, same
+passphrase (and fingerprint) unlock, same visual language, same entry
+points. Plus the long-requested second cipher with honest, practical
+guidance and an Automatic mode that measures instead of guessing.
+
+### Added
+
+- **Image encryption & decryption, natively integrated**
+  (user direction: "it must feel like it was always a core capability").
+  - **CKF1 container format** (`.cki`, `application/x-cipherkey`): the
+    exact CK1 55-byte header + independently sealed 64 KiB chunks. A
+    per-file subkey (`HKDF-SHA256(eraKey, salt=nonce)`) makes chunk
+    nonces collision-free across files; chunk AAD binds header,
+    position and finality (reordering / splicing / truncation all
+    fail authentication). Peak memory is ONE chunk — the 256 MiB OOM
+    lesson of v0.5.1, now by construction. Full design:
+    `docs/IMAGE-CRYPTO.md`, wire spec: `docs/PROTOCOL.md` §CKF1.
+  - **The SAME trust system**: encrypt an image for the SAME contact
+    with the SAME passphrase; ONE unlock serves text and files. Old-era
+    `.cki` files unlock through the same historical-era path as old
+    messages. No parallel contacts, no second key store.
+  - **Information architecture**: a third row in Home Quick Access
+    (Encrypt/Decrypt image); a Text | Image segment switch inside BOTH
+    the Encrypt and Decrypt tabs; sharesheet entries ("Encrypt image"
+    for image shares, "Decrypt .cki file" for our MIME type); an
+    "Encrypt image" row in the floating assistant; in-sheet SAF
+    pickers (no storage permission). Results: saved `.cki` with
+    share-back; decrypted images preview (downsampled, private cache)
+    with Save/Share via SAF/FileProvider.
+- **ChaCha20-Poly1305 (RFC 8439) as the second CK1 cipher** (wire id
+  `0x02`, additive — old builds reject it by design, so no protocol
+  version bump). Implemented through BouncyCastle's lightweight API
+  (already a dependency for Argon2id — zero new dependencies, no JCA
+  provider insertion, one implementation on every API level and in JVM
+  tests). Pinned byte-for-byte to the RFC 8439 §2.8.2 AEAD vector.
+- **Cipher preference with practical explanations + Automatic**
+  (user direction: "not just two options — explain the difference").
+  Settings → Unlock & security → Cipher offers Automatic /
+  AES-256-GCM / ChaCha20-Poly1305, each with a one-line practical
+  description, plus an expandable "Which one should I choose?"
+  explainer (hardware AES vs constant-time software, security
+  equivalence, compatibility). **Automatic micro-benchmarks both
+  ciphers once per process and uses the faster** — a real measurement
+  of this device, not a CPU-name guess — and shows what it resolved
+  to. The same dialog is reachable from the cipher chip at the point
+  of use in the image flow. Decryption always follows the wire: mixed
+  AES/ChaCha traffic decrypts transparently under any preference.
+
+### Changed
+
+- `ProtocolHeader`/`PassphraseCryptoProvider` are algorithm-aware; the
+  CK1 header layout and every existing AES envelope are byte-identical
+  (golden vector unchanged).
+- `MessageCipher` (text) and the new `MediaCipher` (files) both draw
+  the cipher for NEW encryptions from one injected preference source —
+  one setting, every surface, text and files alike.
+
+### Tests
+
+- 440 unit tests (was 407): RFC 8439 §2.8.2 vector; RFC 5869 HKDF
+  vectors (TC1/TC2); CKF1 roundtrips on every chunk boundary (empty,
+  ±1 byte, exact multiples, multi-chunk) and the adversarial set
+  (tamper header/chunk, truncation mid-file and sentinel-stripped,
+  chunk reordering, trailing garbage, wrong key, unknown cipher id);
+  `MediaCipher` two-device roundtrip over the same eras/sessions as
+  text; Automatic selector outcome/caching; image naming/formatting
+  helpers.
+
 ## [0.5.2-alpha] - 2026-11-07 — clipboard history, panel close, passphrase suggestion
 
 Three clarifications from the same user who reported the v0.5.1 batch.

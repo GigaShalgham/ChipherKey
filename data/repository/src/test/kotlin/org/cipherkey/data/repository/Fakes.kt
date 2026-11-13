@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import org.cipherkey.core.common.DispatcherProvider
 import org.cipherkey.core.crypto.Argon2KeyDerivator
 import org.cipherkey.core.crypto.Argon2Params
+import org.cipherkey.core.crypto.CkfChunkedCipher
 import org.cipherkey.core.crypto.PassphraseCryptoProvider
 import org.cipherkey.core.crypto.ProtocolRandom
 import org.cipherkey.core.crypto.RandomSource
@@ -181,6 +182,19 @@ class TestDevice(
         protector = protector,
         provider = PassphraseCryptoProvider(),
         sessionTimeout = { 300_000L },
+        dispatchers = dispatchers,
+    )
+
+    /** v0.6.0: the file/image facade over the SAME eras and sessions. */
+    var mediaAlgorithm = org.cipherkey.core.crypto.CipherAlgorithm.AES_256_GCM
+
+    val media = MediaCipher(
+        contacts = contacts,
+        sessionKeys = sessionKeys,
+        sessions = sessions,
+        chunked = CkfChunkedCipher(),
+        random = ProtocolRandom(RandomSource.SECURE),
+        algorithmSource = CipherAlgorithmSource { mediaAlgorithm },
         dispatchers = dispatchers,
     )
 

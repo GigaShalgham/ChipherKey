@@ -36,6 +36,15 @@ as future work):
   testable on the JVM.
 - `:data:repository` is the single composition point where storage,
   sessions, protection and the crypto provider meet.
+- **v0.6.0 (images)**: `MediaCipher` is the file twin of `MessageCipher`
+  in the same module — the SAME `ContactRepository`, `SessionKeyRepository`
+  and `KeySessionManager` instances serve both, so one unlocked session
+  encrypts text and files and there is no parallel key system anywhere.
+  The CKF1 streaming work lives in `:core:crypto`
+  (`Ckf1`, `CkfChunkedCipher`, `Hkdf`) and is pure JVM; the cipher for
+  new encryptions (both facades) comes from one injected
+  `CipherAlgorithmSource` that resolves the user's preference, including
+  the Automatic mode's per-process benchmark (`AutomaticCipherSelector`).
 
 ## Runtime data flow
 
