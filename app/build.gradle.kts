@@ -24,15 +24,15 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "org.cipherkey.app"
+    namespace = "com.turnypt.app"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "org.cipherkey"
+        applicationId = "com.turnypt"
         minSdk = 26
         targetSdk = 36
-        versionCode = 14
-        versionName = "0.6.0"
+        versionCode = 15
+        versionName = "1.0.0"
 
         vectorDrawables {
             useSupportLibrary = true

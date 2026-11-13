@@ -27,7 +27,7 @@ What you expected to happen instead.
 
 **Environment**
 
-- CipherKey version:
+- Turnypt version:
 - Android version:
 - Device model:
 - Messaging app in which the problem occurred (if applicable):
@@ -42,5 +42,5 @@ public anyway.
 
 **Additional context**
 
-Add any other context. Note: by design CipherKey does not log keystrokes,
+Add any other context. Note: by design Turnypt does not log keystrokes,
 passphrases, or plaintext, so there are no in-app logs to attach.

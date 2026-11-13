@@ -1,11 +1,70 @@
 # Changelog
 
-All notable changes to CipherKey are documented in this file.
+All notable changes to Turnypt (formerly CipherKey) are documented in
+this file. Entries up to 0.6.0 were written under the project's former
+name and keep it — history is not rewritten.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-11-13 — the Turnypt rebrand: new name, new mark, .cki opens anywhere, assistant stays in context
+
+CipherKey is now **Turnypt** — turnip + encrypt. The identity changes;
+the security architecture, the wire formats and every existing message
+and file do not: `CK1:` envelopes, `CKS1:` invites and `.cki` files
+(including the `application/x-cipherkey` MIME and the
+`CipherKey-CKF1-v1` HKDF info string) are byte-identical across the
+rename, so a Turnypt user and a CipherKey 0.x user decrypt each other's
+traffic without any migration.
+
+### Added
+
+- **Tapping a `.cki` file now suggests Turnypt in any file manager**
+  (user report: "it doesn't suggest the app — and it's the only app
+  that can read the file"). File managers cannot know a custom MIME
+  type, so for the unregistered `.cki` extension they send
+  `application/octet-stream` — or no type at all — and the v0.6.0
+  MIME-only `ACTION_VIEW` filter never fired. The image companion now
+  ALSO matches by extension via `pathPattern=".*\\.cki"` in the four
+  shapes real file managers produce: `content://`/`file://` URIs, each
+  typed and untyped. `ACTION_SEND` (sharesheet) gets the same treatment,
+  so a `.cki` can be shared INTO the app too.
+- **New launcher icon: the turnip mark** — cream bulb, three green
+  leaves, a keyhole cut out of the bulb's face (turnip + encrypt), on a
+  deep aubergine field. Ships with a monochrome layer for themed icons
+  (Android 13+); all geometry verified inside the adaptive-icon safe
+  zone (max radius 29.3 of 33).
+
+### Changed
+
+- **Rebrand CipherKey → Turnypt**, project-wide: app name (English and
+  the Persian translation), package `org.cipherkey` → `com.turnypt`
+  (applicationId, namespaces, source tree, manifest action/extra
+  identifiers, shortcuts, Room schemas path), themes, DataStore and
+  database file names, Keystore aliases, the CI artifact name, all
+  documentation, and the GitHub repository itself. Protocol identifiers
+  listed above are deliberately untouched.
+- **The floating assistant no longer hijacks the screen** (user report:
+  "tapping en/decrypt closes my app and switches to the full app").
+  Companion sheets launched with `FLAG_ACTIVITY_NEW_TASK` resolved to
+  the app's EXISTING task — dragging the main screen in front of the
+  messenger behind a translucent sheet. Every companion activity now
+  declares `taskAffinity=""`: the sheet runs in its own featherweight
+  task stacked over whatever the user is doing, the messenger stays
+  visible behind it, and finishing returns to the exact spot in the
+  chat. Sharesheet and PROCESS_TEXT entries inherit the same fix.
+- Version identity: `0.6.0` / versionCode 14 → `1.0.0` / versionCode 15.
+
+### Upgrade notes
+
+- The application id changed with the rename (`org.cipherkey` →
+  `com.turnypt`), so Android treats Turnypt as a NEW app: install fresh
+  and re-create contacts by exchanging `CKS1:` invite codes again
+  (local-first means no export channel exists by design), then
+  uninstall the old CipherKey app. Existing `CK1:` messages and `.cki`
+  files remain fully readable.
 
 ## [0.6.0] - 2026-11-13 — second stable release: image encryption, ChaCha20-Poly1305, Automatic cipher
 

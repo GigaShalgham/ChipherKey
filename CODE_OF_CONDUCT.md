@@ -61,7 +61,7 @@ representative at an online or offline event.
 Instances of abusive, harassing, or otherwise unacceptable behavior may be
 reported to the community leaders responsible for enforcement via the
 repository's issue tracker at
-https://github.com/GigaShalgham/CHIPHERKEY/issues
+https://github.com/GigaShalgham/Turnypt/issues
 (mark the issue as confidential in the title if it contains sensitive
 information). All complaints will be reviewed and investigated promptly and
 fairly.

@@ -16,7 +16,7 @@ Facts (verified against Maven Central and the upstream repository):
 
 - Version 0.86.5, packaging AAR with native libraries for armeabi-v7a,
   arm64-v8a, x86 and x86_64 (Rust core via JNI).
-- **License: AGPL-3.0.** CipherKey is Apache-2.0; embedding AGPL code would
+- **License: AGPL-3.0.** Turnypt is Apache-2.0; embedding AGPL code would
   force relicensing the entire application (or a separate closed-usage
   analysis we cannot honestly make here).
 - Upstream states: *"Use outside of Signal is unsupported … All APIs and
@@ -69,7 +69,7 @@ A mode-B integration becomes viable when a candidate satisfies **all** of:
 2. A maintained, Android-consumable artifact (or a buildable Rust core we
    can wrap ourselves with multi-ABI builds wired into Gradle).
 3. An offline-friendly session-establishment story (out-of-band prekey
-   bundles) that does not require CipherKey to run a server.
+   bundles) that does not require Turnypt to run a server.
 4. A test plan extending the existing suite: known-answer vectors for the
    protocol, tamper tests, and device-migration scenarios.
 

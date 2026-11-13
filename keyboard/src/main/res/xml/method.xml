@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Input Method definition for CipherKey.
+  Input Method definition for Turnypt.
 
-  Note on subtype declaration: CipherKey v0.1 ships a single en-US QWERTY
+  Note on subtype declaration: Turnypt v0.1 ships a single en-US QWERTY
   layout without declaring an explicit subtype, which keeps it selectable as
   the default IME. Language-aware subtypes are roadmap work (see
   docs/ARCHITECTURE.md).
 -->
 <input-method xmlns:android="http://schemas.android.com/apk/res/android"
-    android:settingsActivity="org.cipherkey.app.MainActivity"
+    android:settingsActivity="com.turnypt.app.MainActivity"
     android:supportsSwitchingToNextInputMethod="true" />

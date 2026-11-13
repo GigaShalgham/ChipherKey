@@ -31,14 +31,14 @@
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <application
-        android:name=".CipherKeyApplication"
+        android:name=".TurnyptApplication"
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:largeHeap="true"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.CipherKey">
+        android:theme="@style/Theme.Turnypt">
 
         <activity
             android:name=".MainActivity"
@@ -65,6 +65,19 @@
           system selection toolbar and sharesheet; keep them short.
           noHistory + excludeFromRecents: utility flows, nothing kept in
           recents; an abandoned flow is discarded (passphrase included).
+
+          v1.0.0 taskAffinity="" (user report: "tapping Encrypt in the
+          floating assistant closes my app and switches to the full app"):
+          a companion launched with FLAG_ACTIVITY_NEW_TASK resolves to any
+          task carrying the app's default affinity — i.e. the EXISTING main
+          task — so Android dragged the whole app (main screen behind the
+          translucent sheet) in front of the messenger. With an EMPTY
+          affinity the sheet always gets its own featherweight task stacked
+          on top of whatever the user is doing: the messenger stays visible
+          behind the dimmed sheet, and finish() lands the user exactly where
+          they were. Same discipline for every companion surface (overlay,
+          sharesheet, PROCESS_TEXT, shortcuts) — the flows never own a
+          back stack of the main app.
         -->
 
         <activity
@@ -73,7 +86,8 @@
             android:label="@string/process_text_encrypt_label"
             android:noHistory="true"
             android:excludeFromRecents="true"
-            android:theme="@style/Theme.CipherKey.Companion">
+            android:taskAffinity=""
+            android:theme="@style/Theme.Turnypt.Companion">
             <intent-filter android:label="@string/process_text_encrypt_label">
                 <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -87,7 +101,8 @@
             android:label="@string/process_text_decrypt_label"
             android:noHistory="true"
             android:excludeFromRecents="true"
-            android:theme="@style/Theme.CipherKey.Companion">
+            android:taskAffinity=""
+            android:theme="@style/Theme.Turnypt.Companion">
             <intent-filter android:label="@string/process_text_decrypt_label">
                 <action android:name="android.intent.action.PROCESS_TEXT" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -101,7 +116,8 @@
             android:label="@string/share_decrypt_label"
             android:noHistory="true"
             android:excludeFromRecents="true"
-            android:theme="@style/Theme.CipherKey.Companion">
+            android:taskAffinity=""
+            android:theme="@style/Theme.Turnypt.Companion">
             <intent-filter android:label="@string/share_decrypt_label">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -122,10 +138,11 @@
             android:label="@string/app_name"
             android:noHistory="true"
             android:excludeFromRecents="true"
+            android:taskAffinity=""
             android:theme="@android:style/Theme.NoDisplay">
             <intent-filter>
-                <action android:name="org.cipherkey.app.action.ENCRYPT_CLIPBOARD" />
-                <action android:name="org.cipherkey.app.action.DECRYPT_CLIPBOARD" />
+                <action android:name="com.turnypt.app.action.ENCRYPT_CLIPBOARD" />
+                <action android:name="com.turnypt.app.action.DECRYPT_CLIPBOARD" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
@@ -133,10 +150,31 @@
         <!--
           v0.6.0 image companion (docs/IMAGE-CRYPTO.md): sharesheet and
           file-entry into the SAME image flows the in-app tabs host.
-          SEND image/* encrypts the shared image; SEND/VIEW
-          application/x-cipherkey decrypts a .cki file. FLAG_SECURE is set
-          in code; noHistory/excludeFromRecents follow the companion
+          SEND image/* encrypts the shared image; SEND/VIEW of a .cki file
+          (typed or untyped) decrypts it. FLAG_SECURE is set in code;
+          noHistory/excludeFromRecents/taskAffinity follow the companion
           discipline (an abandoned flow is discarded, passphrase included).
+
+
+          v1.0.0 .cki OPEN-WITH FIX (user report: "tapping a .cki file
+          suggests nothing, and this app is the only one that can read
+          it"). File managers cannot know our custom MIME type — for an
+          unregistered extension like .cki they resolve the MIME to
+          application/octet-stream (or send no type at all), so the
+          v0.6.0 filter on application/x-cipherkey alone NEVER matched.
+          The fix is extension matching via pathPattern (the AOSP
+          PatternMatcher simple-glob: ".*" spans any sequence, "\\.cki" is
+          a literal dot + extension), declared in the four shapes real
+          file managers produce:
+            - content:// with a MIME type (octet-stream from MediaStore,
+              our own x-cipherkey, or a file manager's guess);
+            - content:// with NO type at all;
+            - file:// with a MIME type (older/legacy explorers);
+            - file:// with no type.
+          Most providers embed the real file path in the URI (Files by
+          Google, Solid Explorer, Samsung My Files), so the pattern has
+          something to match; SEND (sharesheet) gets the same treatment
+          so a .cki can be shared INTO the app, not only opened.
         -->
         <activity
             android:name=".companion.ImageCipherActivity"
@@ -144,7 +182,8 @@
             android:label="@string/image_encrypt_label"
             android:noHistory="true"
             android:excludeFromRecents="true"
-            android:theme="@style/Theme.CipherKey.Companion">
+            android:taskAffinity=""
+            android:theme="@style/Theme.Turnypt.Companion">
             <intent-filter android:label="@string/image_encrypt_label">
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -155,11 +194,41 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:mimeType="application/x-cipherkey" />
             </intent-filter>
+            <!-- sharesheet: a .cki shared from a file manager -->
+            <intent-filter android:label="@string/image_decrypt_label">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.cki" />
+            </intent-filter>
+            <!-- open with: content:// uri that carries a MIME type -->
             <intent-filter android:label="@string/image_decrypt_label">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="content" android:mimeType="application/x-cipherkey" />
+            </intent-filter>
+            <intent-filter android:label="@string/image_decrypt_label">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.cki" />
+            </intent-filter>
+            <!-- open with: content:// uri with no MIME type at all -->
+            <intent-filter android:label="@string/image_decrypt_label">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:host="*" android:pathPattern=".*\\.cki" />
+            </intent-filter>
+            <!-- open with: legacy file:// uris, typed and untyped -->
+            <intent-filter android:label="@string/image_decrypt_label">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.cki" />
+            </intent-filter>
+            <intent-filter android:label="@string/image_decrypt_label">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.cki" />
             </intent-filter>
         </activity>
 

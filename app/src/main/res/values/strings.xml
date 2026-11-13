@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">CipherKey</string>
+    <string name="app_name">Turnypt</string>
     <string name="tagline">Private encryption for any messenger — no servers, no accounts</string>
 
     <!-- Main navigation (v0.3.0 five-tab layout) -->
@@ -12,9 +12,9 @@
 
     <!-- Companion entry labels (user-visible in selection toolbar / sharesheet).
          Keep short: OEMs truncate long labels. -->
-    <string name="process_text_encrypt_label">Encrypt (CipherKey)</string>
-    <string name="process_text_decrypt_label">Decrypt (CipherKey)</string>
-    <string name="share_decrypt_label">Decrypt with CipherKey</string>
+    <string name="process_text_encrypt_label">Encrypt (Turnypt)</string>
+    <string name="process_text_decrypt_label">Decrypt (Turnypt)</string>
+    <string name="share_decrypt_label">Decrypt with Turnypt</string>
 
     <!-- Companion sheet -->
     <string name="sheet_encrypt">Encrypt</string>
@@ -55,7 +55,7 @@
     <!-- v0.5.2: clipboard HISTORY dialog ("Clipboard" button next to Paste)
          — the list of things you copied now and copied before. -->
     <string name="clipboard_history_title">Clipboard history</string>
-    <string name="clipboard_history_empty">Nothing here yet. Text you copy lands here when you open CipherKey or paste.</string>
+    <string name="clipboard_history_empty">Nothing here yet. Text you copy lands here when you open Turnypt or paste.</string>
     <string name="clipboard_history_cleared">Clipboard history cleared.</string>
     <string name="clipboard_history_truncated">truncated</string>
     <string name="clipboard_history_ck1_tag">CK1</string>
@@ -66,7 +66,7 @@
     <string name="clipboard_history_delete_entry">Delete this entry</string>
 
     <!-- Biometric prompt (system dialog copy) -->
-    <string name="biometric_prompt_title_unlock">Unlock CipherKey</string>
+    <string name="biometric_prompt_title_unlock">Unlock Turnypt</string>
     <string name="biometric_prompt_title_remember">Remember this key</string>
     <string name="biometric_prompt_subtitle">Touch the fingerprint sensor</string>
     <string name="biometric_prompt_negative">Not now</string>
@@ -87,15 +87,15 @@
     <string name="assistant_encrypt_clipboard">Encrypt clipboard</string>
     <string name="assistant_decrypt_clipboard">Decrypt clipboard</string>
     <string name="assistant_lock_all">Lock all sessions</string>
-    <string name="assistant_open_app">Open CipherKey</string>
+    <string name="assistant_open_app">Open Turnypt</string>
     <string name="assistant_turn_off">Turn off assistant</string>
     <string name="assistant_hint">In messengers: copy the message, then tap "Decrypt clipboard".</string>
     <!-- v0.5.2: header caption + the ✕ that collapses the panel with no action. -->
-    <string name="assistant_panel_title">CipherKey</string>
+    <string name="assistant_panel_title">Turnypt</string>
     <string name="assistant_close_panel">Close panel</string>
     <string name="assistant_locked_all">All sessions locked (%1$d wiped)</string>
     <string name="assistant_locked_all_none">No unlocked sessions to lock</string>
-    <string name="assistant_notification_title">CipherKey assistant active</string>
+    <string name="assistant_notification_title">Turnypt assistant active</string>
     <string name="assistant_notification_text">Tap the bubble to encrypt or decrypt the clipboard.</string>
 
     <!-- Home (v0.3.0). v0.4.1: the how-it-works and security text walls are
@@ -203,7 +203,7 @@
     <string name="settings_kdf_summary">Applies to key eras created from now on. Stronger settings make brute-force attacks proportionally more expensive and unlock slightly slower.</string>
     <string name="kdf_profile_desc">%1$d MiB · %2$d passes</string>
     <string name="settings_about_title">About</string>
-    <string name="settings_about_version">CipherKey %1$s — local-first encryption companion.</string>
+    <string name="settings_about_version">Turnypt %1$s — local-first encryption companion.</string>
     <string name="settings_about_line2">CK1 protocol v1 + CKF1 files · AES-256-GCM / ChaCha20-Poly1305 · Argon2id (RFC 9106) · Apache-2.0 license.</string>
     <string name="settings_about_line3">Public-key mode (CK1 mode 0x02) is specified but not yet integrated.</string>
     <string name="state_on">On</string>
@@ -216,20 +216,20 @@
     <string name="notice_biometric_stale">The remembered fingerprint key is out of date (the contact\'s key era changed). Unlock with the passphrase instead.</string>
     <string name="notice_clipboard_access_failed">Could not access the clipboard.</string>
     <string name="notice_clipboard_blank">The clipboard text is empty (blank). Copy the text, then tap Try again.</string>
-    <string name="notice_clipboard_blocked">Android blocked clipboard access (%1$s). Tap Try again while CipherKey is in the foreground.</string>
+    <string name="notice_clipboard_blocked">Android blocked clipboard access (%1$s). Tap Try again while Turnypt is in the foreground.</string>
     <string name="notice_clipboard_empty">The clipboard is empty. Copy the text first, then tap Try again.</string>
-    <string name="notice_clipboard_nontext">The clipboard contains non-text content (%1$s). CipherKey can only process text — copy text, then tap Try again.</string>
+    <string name="notice_clipboard_nontext">The clipboard contains non-text content (%1$s). Turnypt can only process text — copy text, then tap Try again.</string>
     <string name="notice_decrypt_failed">Decryption failed — the message is corrupted or was tampered with.</string>
     <string name="notice_empty_input">Type or paste a message first.</string>
     <string name="notice_encrypt_failed">Encryption failed: %1$s</string>
     <string name="notice_input_too_long">The text is longer than %1$s KiB and cannot be processed as one message.</string>
     <string name="notice_no_contact_selected">Choose a contact first.</string>
-    <string name="notice_no_contacts">No contacts yet. Open CipherKey and create a contact with a shared passphrase first.</string>
+    <string name="notice_no_contacts">No contacts yet. Open Turnypt and create a contact with a shared passphrase first.</string>
     <string name="notice_no_era">This contact has no key era yet. Open the app, open the contact, and create or import a key first.</string>
     <string name="notice_no_selection_encrypt">No text was selected. Select the draft text and try again.</string>
     <string name="notice_no_selection_decrypt">No text was selected. Select the whole \"CK1:…\" message and try again.</string>
     <string name="notice_not_envelope">This text is not a CK1 encrypted message. Select the whole \"CK1:…\" message and try again.</string>
-    <string name="notice_nothing_shared">Nothing was shared. Share the \"CK1:…\" message text with CipherKey.</string>
+    <string name="notice_nothing_shared">Nothing was shared. Share the \"CK1:…\" message text with Turnypt.</string>
     <string name="notice_nothing_to_encrypt">Nothing to encrypt.</string>
     <string name="notice_oversized_encrypt">The selected text is longer than %1$s KiB and cannot be encrypted as one message.</string>
     <string name="notice_oversized_decrypt">The selected text is longer than %1$s KiB and is not a valid CK1 envelope.</string>
@@ -301,7 +301,7 @@
 
     <!-- Image decrypt flow -->
     <string name="image_pick_cki_action">Choose .cki file</string>
-    <string name="image_pick_cki_hint">Pick a file encrypted by CipherKey (it ends in .cki). The contact is recognized from the file itself.</string>
+    <string name="image_pick_cki_hint">Pick a file encrypted by Turnypt (it ends in .cki). The contact is recognized from the file itself.</string>
     <string name="image_decrypt_action">Decrypt</string>
     <string name="image_decrypting">Decrypting…</string>
     <string name="image_result_decrypt_title">Decrypted — from %1$s</string>
@@ -311,7 +311,7 @@
     <string name="image_no_preview">Decrypted (%1$s) — this file type has no preview. Save it to open it.</string>
     <string name="notice_image_open_failed">Could not open that file.</string>
     <string name="notice_image_write_failed">Could not write the file — pick a different location and try again.</string>
-    <string name="notice_not_cipher_file">This file was not encrypted by CipherKey (no CKF1 header).</string>
+    <string name="notice_not_cipher_file">This file was not encrypted by Turnypt (no CKF1 header).</string>
     <string name="notice_media_decrypt_failed">Decryption failed — the file is corrupted, truncated or was tampered with.</string>
     <string name="notice_media_encrypt_failed">Encryption failed: %1$s</string>
     <string name="notice_file_truncated">The encrypted file is incomplete (it was cut short) — ask for the full .cki file again.</string>
@@ -321,7 +321,7 @@
     <string name="settings_cipher_summary">Used for NEW encryptions — messages and files alike. Received content always decrypts regardless of this choice.</string>
     <string name="cipher_chip_label">Cipher: %1$s</string>
     <string name="cipher_pref_auto">Automatic</string>
-    <string name="cipher_pref_auto_desc">CipherKey measures this device once and uses the faster cipher. Recommended.</string>
+    <string name="cipher_pref_auto_desc">Turnypt measures this device once and uses the faster cipher. Recommended.</string>
     <string name="cipher_pref_aes">AES-256-GCM</string>
     <string name="cipher_pref_aes_desc">The industry standard (TLS, full-disk encryption). Fastest on devices with a hardware AES unit — virtually all phones since ~2015.</string>
     <string name="cipher_pref_chacha">ChaCha20-Poly1305</string>
@@ -329,11 +329,11 @@
     <string name="cipher_auto_resolved">Automatic is currently using %1$s on this device.</string>
     <string name="cipher_dialog_title">Cipher algorithm</string>
     <string name="cipher_explain_action">Which one should I choose?</string>
-    <string name="cipher_explain_body">Both algorithms are authenticated (AEAD) with a 256-bit key and a 128-bit tag — the security level is identical, and CipherKey decrypts either one no matter what you pick here.\n\n• AES-256-GCM shines when the processor has a hardware AES unit: nearly every phone since around 2015 does, and there it is the fastest.\n\n• ChaCha20-Poly1305 runs at full speed in pure software and resists timing side channels by design — the better fit for older or low-end hardware.\n\n• Automatic benchmarks both once on this device and switches to the faster one, so you never have to think about it.</string>
+    <string name="cipher_explain_body">Both algorithms are authenticated (AEAD) with a 256-bit key and a 128-bit tag — the security level is identical, and Turnypt decrypts either one no matter what you pick here.\n\n• AES-256-GCM shines when the processor has a hardware AES unit: nearly every phone since around 2015 does, and there it is the fastest.\n\n• ChaCha20-Poly1305 runs at full speed in pure software and resists timing side channels by design — the better fit for older or low-end hardware.\n\n• Automatic benchmarks both once on this device and switches to the faster one, so you never have to think about it.</string>
 
     <!-- Companion image flows (sharesheet labels — keep short) -->
-    <string name="image_encrypt_label">Encrypt image (CipherKey)</string>
-    <string name="image_decrypt_label">Decrypt .cki file (CipherKey)</string>
+    <string name="image_encrypt_label">Encrypt image (Turnypt)</string>
+    <string name="image_decrypt_label">Decrypt .cki file (Turnypt)</string>
     <string name="image_sheet_title_encrypt">Encrypt image</string>
     <string name="image_sheet_title_decrypt">Decrypt image file</string>
     <string name="image_sheet_pick_cta">Choose image to encrypt</string>

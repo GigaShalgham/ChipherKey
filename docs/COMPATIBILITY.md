@@ -1,14 +1,14 @@
-# App compatibility: where the CipherKey entries appear
+# App compatibility: where the Turnypt entries appear
 
-CipherKey integrates through three OS-standard mechanisms: the **text
+Turnypt integrates through three OS-standard mechanisms: the **text
 selection toolbar** (`ACTION_PROCESS_TEXT`), the **sharesheet**
 (`ACTION_SEND`), and the **clipboard**. Whether an entry appears inside a
-particular app is decided by *that app*, not by CipherKey. This page is the
+particular app is decided by *that app*, not by Turnypt. This page is the
 honest matrix, so nobody files a bug that cannot be fixed from here.
 
 ## Quick answer
 
-**"I don't see Encrypt/Decrypt (CipherKey) when I select a message in
+**"I don't see Encrypt/Decrypt (Turnypt) when I select a message in
 Telegram."** — Expected. Telegram draws its own text-selection menu for
 message bubbles (Reply / Copy / Quote / …) and does not include third-party
 `ACTION_PROCESS_TEXT` actions there. No app can add itself to that menu.
@@ -32,26 +32,26 @@ Sources: [Android Developers — custom text selection actions][1],
 
 | Context | Selection toolbar entry | Recommended path |
 |---|---|---|
-| Browsers (Chrome, Samsung Internet, Firefox) | ✅ appears (One UI 6+: in the ⋮ overflow) | select → Encrypt/Decrypt (CipherKey) |
-| Standard `EditText` fields (SMS, Keep, most input boxes) | ✅ appears (overflow on One UI) | select → Encrypt/Decrypt (CipherKey) |
-| Telegram — message bubbles (received text) | ❌ never (Telegram's own menu) | **copy → long-press CipherKey icon → Decrypt clipboard** |
-| Telegram — message input field (draft) | ⚠️ usually, in the overflow; Telegram-controlled | select draft → Encrypt (CipherKey), or clipboard flow |
+| Browsers (Chrome, Samsung Internet, Firefox) | ✅ appears (One UI 6+: in the ⋮ overflow) | select → Encrypt/Decrypt (Turnypt) |
+| Standard `EditText` fields (SMS, Keep, most input boxes) | ✅ appears (overflow on One UI) | select → Encrypt/Decrypt (Turnypt) |
+| Telegram — message bubbles (received text) | ❌ never (Telegram's own menu) | **copy → long-press Turnypt icon → Decrypt clipboard** |
+| Telegram — message input field (draft) | ⚠️ usually, in the overflow; Telegram-controlled | select draft → Encrypt (Turnypt), or clipboard flow |
 | WhatsApp — message bubbles | ❌ (own menu) | clipboard flow |
-| WhatsApp — input field | ✅ usually (overflow) | select draft → Encrypt (CipherKey) |
-| Apps with a Share button on text | n/a — sharesheet | Share → Decrypt with CipherKey |
-| Anything else / worst case | — | copy → long-press CipherKey → **Decrypt clipboard** / **Encrypt clipboard**, or enable the floating assistant |
+| WhatsApp — input field | ✅ usually (overflow) | select draft → Encrypt (Turnypt) |
+| Apps with a Share button on text | n/a — sharesheet | Share → Decrypt with Turnypt |
+| Anything else / worst case | — | copy → long-press Turnypt → **Decrypt clipboard** / **Encrypt clipboard**, or enable the floating assistant |
 
 ## The recommended flow in Telegram (zero extra taps over a toolbar)
 
 Receiving:
 1. Long-press the `CK1:…` message in Telegram → **Copy**.
-2. Long-press the **CipherKey** icon on the home screen →
+2. Long-press the **Turnypt** icon on the home screen →
    **Decrypt clipboard** (launcher shortcut, added in v0.5.0).
 3. Read the plaintext preview, **Copy** if needed, close — you land back
    where you were.
 
 Sending:
-1. Type nothing yet — long-press **CipherKey** → **Encrypt clipboard**
+1. Type nothing yet — long-press **Turnypt** → **Encrypt clipboard**
    (or type the draft anywhere, cut it to the clipboard, then encrypt).
 2. Pick the contact, unlock, **Copy** the envelope.
 3. Paste into the Telegram input and send.
@@ -59,7 +59,7 @@ Sending:
 Power users can enable the **floating assistant** (Settings → Features):
 a draggable bubble that encrypts/decrypts the clipboard over any app.
 
-## What CipherKey will never do to "fix" this
+## What Turnypt will never do to "fix" this
 
 - ❌ draw an overlay over Telegram's menu without permission,
 - ❌ read the clipboard in the background,

@@ -20,7 +20,7 @@ Three integration gaps were reported against a WIP demo that never shipped:
    per device without sacrificing security or compatibility.
 
 Success criterion: the user must not feel an external tool was glued onto
-CipherKey; image encryption must feel like it was always a core capability.
+Turnypt; image encryption must feel like it was always a core capability.
 
 ## 2. What exists and is reused verbatim
 
@@ -35,7 +35,7 @@ CipherKey; image encryption must feel like it was always a core capability.
 | UI language (SectionCard, ContactPicker, PassphraseInput, notices) | Same components, same unlock card, same biometric offer |
 | Companion architecture (FLAG_SECURE, noHistory sheets) | New `ImageCipherActivity` follows the same pattern |
 
-## 3. Wire format — CKF1 (CipherKey File, version 1)
+## 3. Wire format — CKF1 (Turnypt File, version 1)
 
 Binary container for large payloads (images today, any file later). A
 `.cki` file is a drop-in attachment for any messenger.
@@ -88,7 +88,7 @@ tag; both are recorded per message/file and decrypt transparently.
 | Timing side channels | software tables must be avoided; hardware is constant-time | naturally constant-time in software |
 | Typical Android | 2015+ flagships (ARMv8): clear winner | older ARMv7 devices: ~1.5–3x faster than software AES |
 
-**Automatic mode**: at first use, CipherKey micro-benchmarks both
+**Automatic mode**: at first use, Turnypt micro-benchmarks both
 implementations on THIS device (256 KiB seal each, cached per process) and
 uses the faster one. The measurement reflects real conditions — hardware
 units, the JIT, the bundled ChaCha implementation — not a guess from a
@@ -144,7 +144,7 @@ except the cache preview, which is deleted with the flow.
 
 ## 7. Compatibility & security notes
 
-- Old CipherKey builds that receive a `0x02` message/file reject it with
+- Old Turnypt builds that receive a `0x02` message/file reject it with
   `UnsupportedAlgorithm` — the designed forward-compatible behavior; no
   protocol version bump needed (documented in PROTOCOL.md).
 - Text `CK1:` envelopes: wire-compatible, unchanged.

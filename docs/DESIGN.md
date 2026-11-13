@@ -1,4 +1,4 @@
-# CipherKey Design Research & the v0.5 Design Language
+# Turnypt Design Research & the v0.5 Design Language
 
 Date: 2026-11-06 · Status: implemented in v0.5.0-alpha
 Method: full audit of the v0.4.2 UI code + Material 3 specification study +
@@ -9,7 +9,7 @@ research for the text-selection problem. Sources are linked inline.
 
 ## 1. What the audit of v0.4.2 found
 
-A screen-by-screen read of `app/src/main/java/org/cipherkey/app/ui/` found a
+A screen-by-screen read of `app/src/main/java/com/turnypt/app/ui/` found a
 Material 3 theme that is *declared* but barely *used as a system*:
 
 1. **Under-used color roles.** Only ~17 of the ~26 Material 3 roles were
@@ -44,7 +44,7 @@ fills — never text or icon colors. The pairings are pre-checked for
 ≥3:1 contrast; free-form mixing silently breaks accessibility.
 Source: [Color roles — Material 3](https://m3.material.io/styles/color/roles).
 
-Implication: CipherKey should define *every* role it can (including the
+Implication: Turnypt should define *every* role it can (including the
 surface-container tier and inverse roles) and build grouped surfaces from
 tonal containers, not borders.
 
@@ -55,7 +55,7 @@ than pure black; surfaces get *lighter* with elevation; accents are
 desaturated so body text passes WCAG AA (4.5:1); color is sparse.
 Source: [Dark theme — Material Design](https://m2.material.io/design/color/dark-theme.html).
 
-CipherKey's dark neutrals (#121318/#16171C) already follow this; the
+Turnypt's dark neutrals (#121318/#16171C) already follow this; the
 redesign keeps them and adds the container tier so elevation differences
 are expressed tonally.
 
@@ -94,7 +94,7 @@ and advanced controls on demand
 ([NN/g definition](https://www.nngroup.com/articles/progressive-disclosure/),
 [13 examples](https://userpilot.com/blog/progressive-disclosure-examples)).
 
-CipherKey's crypto knobs (Argon2 profiles, KDF strength, era internals) are
+Turnypt's crypto knobs (Argon2 profiles, KDF strength, era internals) are
 expert settings. They stay available exactly where power users look for
 them, but the redesign never surfaces them on the primary path. (This also
 honors the project's earlier user feedback: *no tutorial walls in the app* —
@@ -177,7 +177,7 @@ quick-action tiles 16.
 
 ### 4.1 Root cause — researched, not guessed
 
-User report: "Encrypt (CipherKey)" appears in the selection toolbar in
+User report: "Encrypt (Turnypt)" appears in the selection toolbar in
 browsers but not in Telegram. This matches how the platform works:
 
 1. **Custom text views build their own menus.** `ACTION_PROCESS_TEXT`
@@ -198,15 +198,15 @@ browsers but not in Telegram. This matches how the platform works:
    `EditText` → entries normally appear in the overflow, but this is
    Telegram-controlled and not guaranteed.
 
-**Conclusion: no manifest change on CipherKey's side can force its entry
+**Conclusion: no manifest change on Turnypt's side can force its entry
 into Telegram's message-selection menu. The fix is a fallback ladder that
 works everywhere.**
 
 ### 4.2 The v0.5 fallback ladder
 
 1. **Launcher app shortcuts (new, zero permissions).** Long-press the
-   CipherKey icon → **Decrypt clipboard** / **Encrypt clipboard**. In
-   Telegram: copy the message → long-press CipherKey → Decrypt → read →
+   Turnypt icon → **Decrypt clipboard** / **Encrypt clipboard**. In
+   Telegram: copy the message → long-press Turnypt → Decrypt → read →
    back to Telegram. Implemented as two static shortcuts
    ([app shortcuts guide](https://developer.android.com/develop/ui/views/launch/shortcuts))
    routed through a no-display trampoline activity into the existing

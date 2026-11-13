@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   v0.5.0 launcher app shortcuts (docs/COMPATIBILITY.md, docs/DESIGN.md
-  §4.2): long-press the CipherKey icon for "Encrypt clipboard" /
+  §4.2): long-press the Turnypt icon for "Encrypt clipboard" /
   "Decrypt clipboard" — the selection-toolbar fallback that works in
   every messenger, including Telegram (whose message-selection menu
   never hosts third-party PROCESS_TEXT entries).
@@ -18,9 +18,9 @@
         android:shortcutShortLabel="@string/shortcut_encrypt_short"
         android:shortcutLongLabel="@string/shortcut_encrypt_long">
         <intent
-            android:action="org.cipherkey.app.action.ENCRYPT_CLIPBOARD"
-            android:targetPackage="org.cipherkey"
-            android:targetClass="org.cipherkey.app.companion.ClipboardShortcutActivity" />
+            android:action="com.turnypt.app.action.ENCRYPT_CLIPBOARD"
+            android:targetPackage="com.turnypt"
+            android:targetClass="com.turnypt.app.companion.ClipboardShortcutActivity" />
     </shortcut>
     <shortcut
         android:shortcutId="decrypt_clipboard"
@@ -29,8 +29,8 @@
         android:shortcutShortLabel="@string/shortcut_decrypt_short"
         android:shortcutLongLabel="@string/shortcut_decrypt_long">
         <intent
-            android:action="org.cipherkey.app.action.DECRYPT_CLIPBOARD"
-            android:targetPackage="org.cipherkey"
-            android:targetClass="org.cipherkey.app.companion.ClipboardShortcutActivity" />
+            android:action="com.turnypt.app.action.DECRYPT_CLIPBOARD"
+            android:targetPackage="com.turnypt"
+            android:targetClass="com.turnypt.app.companion.ClipboardShortcutActivity" />
     </shortcut>
 </shortcuts>

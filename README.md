@@ -1,25 +1,31 @@
-# CipherKey
+<p align="center">
+  <img src="docs/logo.png" width="110" alt="Turnypt — the turnip mark" />
+</p>
 
-[![CI](https://github.com/GigaShalgham/CHIPHERKEY/actions/workflows/android-ci.yml/badge.svg)](https://github.com/GigaShalgham/CHIPHERKEY/actions/workflows/android-ci.yml)
-[![Release](https://img.shields.io/badge/release-v0.6.0-blue.svg)](https://github.com/GigaShalgham/CHIPHERKEY/releases/latest)
+# Turnypt
+
+*formerly CipherKey — rebranded in v1.0.0; same vault, new name*
+
+[![CI](https://github.com/GigaShalgham/Turnypt/actions/workflows/android-ci.yml/badge.svg)](https://github.com/GigaShalgham/Turnypt/actions/workflows/android-ci.yml)
+[![Release](https://img.shields.io/badge/release-v1.0.0-blue.svg)](https://github.com/GigaShalgham/Turnypt/releases/latest)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Min SDK: 26](https://img.shields.io/badge/min_SDK-26_(Android_8.0)-green.svg)](app/build.gradle.kts)
 
 **A local-first, permission-free encryption companion for any Android
 messenger.**
 
-CipherKey adds end-to-end message encryption to the messaging apps you
+Turnypt adds end-to-end message encryption to the messaging apps you
 already use — SMS, Telegram, WhatsApp, anything that supports standard text
 selection or sharing — without any server, account, or network access. You
 keep the keyboard you already use: select the text you want to protect, tap
-**Encrypt (CipherKey)**, and the draft is replaced with a `CK1:...`
+**Encrypt (Turnypt)**, and the draft is replaced with a `CK1:...`
 ciphertext you send as an ordinary message. On the receiving side, select
-or share the message, tap **Decrypt (CipherKey)**, enter the shared
+or share the message, tap **Decrypt (Turnypt)**, enter the shared
 passphrase, and read the plaintext preview.
 
 ```
-Send:    type with any keyboard → select the draft → “Encrypt (CipherKey)” → ciphertext replaces it → send
-Receive: select/share the CK1:... message → “Decrypt (CipherKey)” → passphrase → preview → Copy
+Send:    type with any keyboard → select the draft → “Encrypt (Turnypt)” → ciphertext replaces it → send
+Receive: select/share the CK1:... message → “Decrypt (Turnypt)” → passphrase → preview → Copy
 ```
 
 When an app's selection toolbar is unavailable, the Home screen offers an
@@ -38,7 +44,8 @@ When an app's selection toolbar is unavailable, the Home screen offers an
   with the same passphrase (chunk-wise-authenticated `.cki` files; one
   64 KiB chunk in memory at a time, so any file size is safe).
   Reachable from Quick Access, the Encrypt/Decrypt tabs (Text | Image
-  switch), the sharesheet and the floating assistant.
+  switch), the sharesheet, the floating assistant — and since v1.0.0,
+  tapping a `.cki` file in ANY file manager offers Turnypt directly.
 - **Nothing sensitive at rest** — the passphrase is never stored; unlocked
   keys live in memory only and are wiped on lock, timeout or replacement;
   at rest only a Keystore-wrapped, device-bound **digest** verifier exists
@@ -67,12 +74,12 @@ Android 8.0 (API 26) or newer.
 ## Install
 
 Grab the APK from the
-[latest release](https://github.com/GigaShalgham/CHIPHERKEY/releases/latest).
+[latest release](https://github.com/GigaShalgham/Turnypt/releases/latest).
 Each release page states the build type and the APK's SHA-256 checksum —
 verify before installing:
 
 ```bash
-sha256sum CipherKey-v0.6.0-debug.apk
+sha256sum Turnypt-v1.0.0-debug.apk
 ```
 
 > The APK attached to current releases is the CI **debug build** of the
@@ -81,7 +88,7 @@ sha256sum CipherKey-v0.6.0-debug.apk
 
 ## How it works
 
-1. **Pair once.** Alice creates a contact "Bob" in the app; CipherKey
+1. **Pair once.** Alice creates a contact "Bob" in the app; Turnypt
    generates a key era (public `keyId` + `salt` + Argon2id parameters) and
    shows a `CKS1:...` invite code. Alice sends the code to Bob over any
    channel. Bob creates a contact "Alice", pastes the code. Separately —
@@ -96,10 +103,10 @@ sha256sum CipherKey-v0.6.0-debug.apk
 3. **Encrypt/decrypt in any app.** The selection toolbar and the sharesheet
    carry text in and out; the clipboard fallback covers the rest.
 
-> **Don't see CipherKey in a messenger's text-selection menu?** Some
+> **Don't see Turnypt in a messenger's text-selection menu?** Some
 > messengers (Telegram, WhatsApp message bubbles) draw their *own*
 > selection menu, which cannot host third-party entries — that is a
-> platform fact, not a bug. Long-press the CipherKey icon instead:
+> platform fact, not a bug. Long-press the Turnypt icon instead:
 > **Encrypt clipboard / Decrypt clipboard** launcher shortcuts work in
 > every app. Full matrix and recommended flows:
 > [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md).
@@ -118,7 +125,7 @@ sha256sum CipherKey-v0.6.0-debug.apk
 - `allowBackup=false`; no `INTERNET` permission; zero-permission by
   default.
 
-The honest threat model — including what CipherKey does *not* protect
+The honest threat model — including what Turnypt does *not* protect
 against — is in [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
 
 ## Status and limitations
@@ -193,7 +200,7 @@ CKS1 invites are specified in [`docs/PROTOCOL.md`](docs/PROTOCOL.md).
   [Security policy](SECURITY.md) ·
   [Changelog](CHANGELOG.md)
 - Bugs and feature requests:
-  [Issues](https://github.com/GigaShalgham/CHIPHERKEY/issues).
+  [Issues](https://github.com/GigaShalgham/Turnypt/issues).
   Security issues: see [SECURITY.md](SECURITY.md) — never public issues.
 
 ## License

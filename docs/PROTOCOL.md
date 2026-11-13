@@ -1,5 +1,8 @@
 # The CK1 Wire Protocol (version 1)
 
+The wire protocol of **Turnypt** (formerly CipherKey; the format and its
+identifiers predate the rename and are unchanged).
+
 Status: **implemented and frozen for v1** — any breaking change requires a
 new version byte and a migration note here.
 

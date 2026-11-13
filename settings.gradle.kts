@@ -27,7 +27,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "cipherkey"
+rootProject.name = "turnypt"
 
 include(":app")
 include(":keyboard")

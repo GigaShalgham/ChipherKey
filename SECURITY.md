@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-CipherKey is an independent open-source project. Please report suspected
+Turnypt is an independent open-source project. Please report suspected
 vulnerabilities privately by opening a security advisory on the project
 repository (GitHub: *Security → Advisories*) or contacting the maintainers
 directly. Please do not open public issues for suspected vulnerabilities.

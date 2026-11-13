@@ -3,19 +3,19 @@
 
     <application>
         <!--
-          The CipherKey input method service.
+          The Turnypt input method service.
 
           BIND_INPUT_METHOD is a system signature-level permission; only the
           system may bind to an IME. exported="true" is required by the IME
           contract even though no third party can actually bind.
         -->
         <service
-            android:name="org.cipherkey.keyboard.CipherKeyboardService"
+            android:name="com.turnypt.keyboard.TurnyptKeyboardService"
             android:directBootAware="false"
             android:exported="true"
             android:label="@string/ime_name"
             android:permission="android.permission.BIND_INPUT_METHOD"
-            android:theme="@style/Theme.CipherKey.IME">
+            android:theme="@style/Theme.Turnypt.IME">
             <intent-filter>
                 <action android:name="android.view.InputMethod" />
             </intent-filter>

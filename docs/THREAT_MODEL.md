@@ -1,4 +1,4 @@
-# CipherKey Threat Model (v0.1)
+# Turnypt Threat Model (v0.1)
 
 ## Assets
 
@@ -14,18 +14,18 @@
 
 1. **Network observer** (carrier, ISP, messaging-platform operator):
    sees `CK1:` ciphertexts. Learns message *length*, *timing*, *participants
-   of the underlying transport* — but not content. CipherKey does **not**
+   of the underlying transport* — but not content. Turnypt does **not**
    hide metadata; it encrypts content only.
 2. **Device thief (locked phone)**: FBE + lockscreen protect everything;
-   CipherKey adds no attack surface (no credentials stored beyond the
+   Turnypt adds no attack surface (no credentials stored beyond the
    Keystore-wrapped blob, which is useless without the Keystore key).
 3. **Device thief (unlocked phone)**: can read the Room DB (contact names,
    salts — public), cannot decrypt past or future messages without the
-   passphrase. **However** an unlocked phone with CipherKey as the active
+   passphrase. **However** an unlocked phone with Turnypt as the active
    keyboard lets the attacker type/decrypt in place if a session is active;
    sessions auto-lock (default 5 minutes) and lock on demand. This is the
    same trust level as any unlocked-phone scenario.
-4. **Malicious app on the device**: cannot read CipherKey's data (sandbox);
+4. **Malicious app on the device**: cannot read Turnypt's data (sandbox);
    cannot bind to the IME (system-only permission). A malicious *keyboard*
    the user installs alongside could read everything typed — inherent to
    Android's IME model; the app's onboarding tells users to keep exactly one
@@ -41,13 +41,13 @@
 
 ## Trust boundaries
 
-- **User ↔ CipherKey**: the keyboard is trusted with every keystroke (same
+- **User ↔ Turnypt**: the keyboard is trusted with every keystroke (same
   trust every IME requires). Compensating controls: zero permissions, no
   network code, open source.
-- **CipherKey ↔ third-party apps**: via `InputConnection` only. No
+- **Turnypt ↔ third-party apps**: via `InputConnection` only. No
   Accessibility service, no screen reading, no background clipboard. The
   clipboard is read exclusively on an explicit tap of the Decrypt button.
-- **CipherKey ↔ storage**: raw keys never cross this boundary; only
+- **Turnypt ↔ storage**: raw keys never cross this boundary; only
   Keystore-wrapped blobs and public parameters do.
 
 ## Security requirements → implementation

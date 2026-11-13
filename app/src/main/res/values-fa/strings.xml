@@ -5,7 +5,7 @@
   come for free: Android formats %d with the active locale.
 -->
 <resources>
-    <string name="app_name">CipherKey</string>
+    <string name="app_name">Turnypt</string>
     <string name="tagline">رمزنگاری خصوصی برای هر پیام‌رسان — بدون سرور، بدون حساب کاربری</string>
 
     <!-- Main navigation -->
@@ -16,9 +16,9 @@
     <string name="nav_settings">تنظیمات</string>
 
     <!-- Companion entry labels (keep short: OEMs truncate long labels) -->
-    <string name="process_text_encrypt_label">رمزنگاری (CipherKey)</string>
-    <string name="process_text_decrypt_label">رمزگشایی (CipherKey)</string>
-    <string name="share_decrypt_label">رمزگشایی با CipherKey</string>
+    <string name="process_text_encrypt_label">رمزنگاری (Turnypt)</string>
+    <string name="process_text_decrypt_label">رمزگشایی (Turnypt)</string>
+    <string name="share_decrypt_label">رمزگشایی با Turnypt</string>
 
     <!-- Companion sheet -->
     <string name="sheet_encrypt">رمزنگاری</string>
@@ -56,7 +56,7 @@
 
     <!-- v0.5.2: تاریخچهٔ کلیپ‌بورد — فهرست چیزهایی که حالا و قبلاً کپی کرده‌اید. -->
     <string name="clipboard_history_title">تاریخچهٔ کلیپ‌بورد</string>
-    <string name="clipboard_history_empty">هنوز چیزی اینجا نیست. متن‌هایی که کپی می‌کنید با باز کردن CipherKey یا چسباندن، اینجا ثبت می‌شوند.</string>
+    <string name="clipboard_history_empty">هنوز چیزی اینجا نیست. متن‌هایی که کپی می‌کنید با باز کردن Turnypt یا چسباندن، اینجا ثبت می‌شوند.</string>
     <string name="clipboard_history_cleared">تاریخچهٔ کلیپ‌بورد پاک شد.</string>
     <string name="clipboard_history_truncated">کوتاه‌شده</string>
     <string name="clipboard_history_ck1_tag">CK1</string>
@@ -67,7 +67,7 @@
     <string name="clipboard_history_delete_entry">حذف این مورد</string>
 
     <!-- Biometric prompt (system dialog copy) -->
-    <string name="biometric_prompt_title_unlock">باز کردن قفل CipherKey</string>
+    <string name="biometric_prompt_title_unlock">باز کردن قفل Turnypt</string>
     <string name="biometric_prompt_title_remember">به‌خاطر سپردن این کلید</string>
     <string name="biometric_prompt_subtitle">نشانگر اثر انگشت را لمس کنید</string>
     <string name="biometric_prompt_negative">فعلاً نه</string>
@@ -86,15 +86,15 @@
     <string name="assistant_encrypt_clipboard">رمزنگاری کلیپ‌بورد</string>
     <string name="assistant_decrypt_clipboard">رمزگشایی کلیپ‌بورد</string>
     <string name="assistant_lock_all">قفل همهٔ نشست‌ها</string>
-    <string name="assistant_open_app">باز کردن CipherKey</string>
+    <string name="assistant_open_app">باز کردن Turnypt</string>
     <string name="assistant_turn_off">خاموش کردن دستیار</string>
     <string name="assistant_hint">در پیام‌رسان‌ها: پیام را کپی کنید، بعد «رمزگشایی کلیپ‌بورد» را بزنید.</string>
     <!-- v0.5.2: عنوان پنل و دکمهٔ ✕ که فقط پنل را می‌بندد، بدون هیچ کاری. -->
-    <string name="assistant_panel_title">CipherKey</string>
+    <string name="assistant_panel_title">Turnypt</string>
     <string name="assistant_close_panel">بستن پنل</string>
     <string name="assistant_locked_all">همهٔ نشست‌ها قفل شد (%1$d کلید پاک شد)</string>
     <string name="assistant_locked_all_none">نشست بازی برای قفل‌کردن وجود ندارد</string>
-    <string name="assistant_notification_title">دستیار CipherKey فعال است</string>
+    <string name="assistant_notification_title">دستیار Turnypt فعال است</string>
     <string name="assistant_notification_text">حباب را لمس کنید تا کلیپ‌بورد رمزنگاری یا رمزگشایی شود.</string>
 
     <!-- Home -->
@@ -194,7 +194,7 @@
     <string name="settings_kdf_summary">فقط به دوره‌های کلیدی که از این پس ساخته می‌شوند اعمال می‌شود. تنظیمات قوی‌تر، حملهٔ جست‌وجوی فراگیر را به‌تناسب گران‌تر و باز کردن قفل را کمی کندتر می‌کند.</string>
     <string name="kdf_profile_desc">%1$d مبی‌بایت · %2$d گذر</string>
     <string name="settings_about_title">درباره</string>
-    <string name="settings_about_version">CipherKey %1$s — همراهِ رمزنگاری local-first.</string>
+    <string name="settings_about_version">Turnypt %1$s — همراهِ رمزنگاری local-first.</string>
     <string name="settings_about_line2">پروتکل CK1 نسخهٔ ۱ + فایل‌های CKF1 · AES-256-GCM / ChaCha20-Poly1305 · Argon2id (RFC 9106) · مجوز Apache-2.0.</string>
     <string name="settings_about_line3">حالت کلید عمومی (حالت 0x02 در CK1) مشخص شده اما هنوز یکپارچه نشده است.</string>
     <string name="state_on">روشن</string>
@@ -207,20 +207,20 @@
     <string name="notice_biometric_stale">کلید به‌خاطر سپرده‌شده با اثر انگشت قدیمی شده است (دورهٔ کلید مخاطب عوض شده). به‌جای آن با عبارت عبور قفل را باز کنید.</string>
     <string name="notice_clipboard_access_failed">دسترسی به کلیپ‌بورد ممکن نشد.</string>
     <string name="notice_clipboard_blank">متن کلیپ‌بورد خالی است (سفید). متن را کپی کنید، سپس «تلاش دوباره» را بزنید.</string>
-    <string name="notice_clipboard_blocked">اندروید دسترسی به کلیپ‌بورد را مسدود کرد (%1$s). وقتی CipherKey در پیش‌زمینه است، «تلاش دوباره» را بزنید.</string>
+    <string name="notice_clipboard_blocked">اندروید دسترسی به کلیپ‌بورد را مسدود کرد (%1$s). وقتی Turnypt در پیش‌زمینه است، «تلاش دوباره» را بزنید.</string>
     <string name="notice_clipboard_empty">کلیپ‌بورد خالی است. ابتدا متن را کپی کنید، سپس «تلاش دوباره» را بزنید.</string>
-    <string name="notice_clipboard_nontext">کلیپ‌بورد محتوای غیرمتنی دارد (%1$s). CipherKey فقط متن را پردازش می‌کند — متن را کپی کنید و «تلاش دوباره» را بزنید.</string>
+    <string name="notice_clipboard_nontext">کلیپ‌بورد محتوای غیرمتنی دارد (%1$s). Turnypt فقط متن را پردازش می‌کند — متن را کپی کنید و «تلاش دوباره» را بزنید.</string>
     <string name="notice_decrypt_failed">رمزگشایی ناموفق بود — پیام خراب است یا دستکاری شده است.</string>
     <string name="notice_empty_input">ابتدا پیامی بنویسید یا بچسبانید.</string>
     <string name="notice_encrypt_failed">رمزنگاری ناموفق بود: %1$s</string>
     <string name="notice_input_too_long">متن از %1$s کیبی‌بایت بلندتر است و نمی‌توان آن را به‌صورت یک پیام پردازش کرد.</string>
     <string name="notice_no_contact_selected">ابتدا یک مخاطب انتخاب کنید.</string>
-    <string name="notice_no_contacts">هنوز مخاطبی ندارید. ابتدا CipherKey را باز کنید و مخاطبی با عبارت عبور مشترک بسازید.</string>
+    <string name="notice_no_contacts">هنوز مخاطبی ندارید. ابتدا Turnypt را باز کنید و مخاطبی با عبارت عبور مشترک بسازید.</string>
     <string name="notice_no_era">این مخاطب هنوز دورهٔ کلیدی ندارد. برنامه را باز کنید، مخاطب را باز کنید و ابتدا کلیدی بسازید یا درون‌ریزی کنید.</string>
     <string name="notice_no_selection_encrypt">متنی انتخاب نشده است. متن پیش‌نویس را انتخاب کنید و دوباره امتحان کنید.</string>
     <string name="notice_no_selection_decrypt">متنی انتخاب نشده است. کل پیام «CK1:…» را انتخاب کنید و دوباره امتحان کنید.</string>
     <string name="notice_not_envelope">این متن یک پیام رمزنگاری‌شدهٔ CK1 نیست. کل پیام «CK1:…» را انتخاب کنید و دوباره امتحان کنید.</string>
-    <string name="notice_nothing_shared">چیزی به اشتراک گذاشته نشد. متن پیام «CK1:…» را با CipherKey به اشتراک بگذارید.</string>
+    <string name="notice_nothing_shared">چیزی به اشتراک گذاشته نشد. متن پیام «CK1:…» را با Turnypt به اشتراک بگذارید.</string>
     <string name="notice_nothing_to_encrypt">چیزی برای رمزنگاری نیست.</string>
     <string name="notice_oversized_encrypt">متن انتخاب‌شده از %1$s کیبی‌بایت بلندتر است و نمی‌توان آن را به‌صورت یک پیام رمزنگاری کرد.</string>
     <string name="notice_oversized_decrypt">متن انتخاب‌شده از %1$s کیبی‌بایت بلندتر است و پاکت CK1 معتبری نیست.</string>
@@ -289,7 +289,7 @@
 
     <!-- جریان رمزگشایی تصویر -->
     <string name="image_pick_cki_action">انتخاب فایل ‎.cki</string>
-    <string name="image_pick_cki_hint">فایلی را که CipherKey رمزنگاری کرده (پسوند ‎.cki) انتخاب کنید. مخاطب از روی خود فایل شناسایی می‌شود.</string>
+    <string name="image_pick_cki_hint">فایلی را که Turnypt رمزنگاری کرده (پسوند ‎.cki) انتخاب کنید. مخاطب از روی خود فایل شناسایی می‌شود.</string>
     <string name="image_decrypt_action">رمزگشایی</string>
     <string name="image_decrypting">در حال رمزگشایی…</string>
     <string name="image_result_decrypt_title">رمزگشایی شد — از %1$s</string>
@@ -299,7 +299,7 @@
     <string name="image_no_preview">رمزگشایی شد (%1$s) — برای این نوع فایل پیش‌نمایش وجود ندارد. ذخیره‌اش کنید تا بازش کنید.</string>
     <string name="notice_image_open_failed">آن فایل باز نشد.</string>
     <string name="notice_image_write_failed">نوشتن فایل ممکن نشد — محل دیگری انتخاب کنید و دوباره امتحان کنید.</string>
-    <string name="notice_not_cipher_file">این فایل با CipherKey رمزنگاری نشده است (هدر CKF1 ندارد).</string>
+    <string name="notice_not_cipher_file">این فایل با Turnypt رمزنگاری نشده است (هدر CKF1 ندارد).</string>
     <string name="notice_media_decrypt_failed">رمزگشایی ناموفق بود — فایل خراب، ناقص یا دستکاری‌شده است.</string>
     <string name="notice_media_encrypt_failed">رمزنگاری ناموفق بود: %1$s</string>
     <string name="notice_file_truncated">فایل رمزشده کامل نیست (جای‌مانده) — فایل کامل ‎.cki را دوباره دریافت کنید.</string>
@@ -309,7 +309,7 @@
     <string name="settings_cipher_summary">برای رمزنگاری‌های جدید به کار می‌رود — هم پیام‌ها و هم فایل‌ها. محتوای دریافتی فارغ از این انتخاب همیشه رمزگشایی می‌شود.</string>
     <string name="cipher_chip_label">الگوریتم: %1$s</string>
     <string name="cipher_pref_auto">خودکار</string>
-    <string name="cipher_pref_auto_desc">‏CipherKey یک‌بار سرعت این دستگاه را می‌سنجد و الگوریتم سریع‌تر را برمی‌گزیند. پیشنهاد ما.</string>
+    <string name="cipher_pref_auto_desc">‏Turnypt یک‌بار سرعت این دستگاه را می‌سنجد و الگوریتم سریع‌تر را برمی‌گزیند. پیشنهاد ما.</string>
     <string name="cipher_pref_aes">AES-256-GCM</string>
     <string name="cipher_pref_aes_desc">استاندارد صنعت (‏TLS، رمزنگاری کامل دیسک). روی دستگاه‌های دارای واحد سخت‌افزاری AES سریع‌ترین است — تقریباً همهٔ گوشی‌های از حدود ۲۰۱۵ به بعد.</string>
     <string name="cipher_pref_chacha">ChaCha20-Poly1305</string>
@@ -317,11 +317,11 @@
     <string name="cipher_auto_resolved">حالت خودکار در حال حاضر روی این دستگاه از %1$s استفاده می‌کند.</string>
     <string name="cipher_dialog_title">الگوریتم رمزنگاری</string>
     <string name="cipher_explain_action">کدام را انتخاب کنم؟</string>
-    <string name="cipher_explain_body">هر دو الگوریتم احراز اصالت‌دار (AEAD) با کلید ۲۵۶ بیتی و برچسب ۱۲۸ بیتی‌اند — سطح امنیت یکسان است و CipherKey فارغ از این انتخاب، هر دو را رمزگشایی می‌کند.\n\n• ‏AES-256-GCM وقتی می‌درخشد که پردازنده واحد سخت‌افزاری AES داشته باشد؛ تقریباً همهٔ گوشی‌ها از حدود ۲۰۱۵ دارند و در آن‌ها سریع‌ترین است.\n\n• ‏ChaCha20-Poly1305 در نرم‌افزار خالص با سرعت کامل اجرا می‌شود و ذاتاً در برابر حمله‌های زمانی مقاوم است — انتخاب بهتر برای سخت‌افزارهای قدیمی یا ضعیف.\n\n• حالت خودکار هر دو را یک‌بار روی همین دستگاه می‌سنجد و به سریع‌تر سوئیچ می‌کند تا شما لازم نباشد به آن فکر کنید.</string>
+    <string name="cipher_explain_body">هر دو الگوریتم احراز اصالت‌دار (AEAD) با کلید ۲۵۶ بیتی و برچسب ۱۲۸ بیتی‌اند — سطح امنیت یکسان است و Turnypt فارغ از این انتخاب، هر دو را رمزگشایی می‌کند.\n\n• ‏AES-256-GCM وقتی می‌درخشد که پردازنده واحد سخت‌افزاری AES داشته باشد؛ تقریباً همهٔ گوشی‌ها از حدود ۲۰۱۵ دارند و در آن‌ها سریع‌ترین است.\n\n• ‏ChaCha20-Poly1305 در نرم‌افزار خالص با سرعت کامل اجرا می‌شود و ذاتاً در برابر حمله‌های زمانی مقاوم است — انتخاب بهتر برای سخت‌افزارهای قدیمی یا ضعیف.\n\n• حالت خودکار هر دو را یک‌بار روی همین دستگاه می‌سنجد و به سریع‌تر سوئیچ می‌کند تا شما لازم نباشد به آن فکر کنید.</string>
 
     <!-- جریان‌های تصویری کامپنیون (برچسب‌های اشتراک — کوتاه) -->
-    <string name="image_encrypt_label">رمزنگاری تصویر (CipherKey)</string>
-    <string name="image_decrypt_label">رمزگشایی فایل ‎.cki (CipherKey)</string>
+    <string name="image_encrypt_label">رمزنگاری تصویر (Turnypt)</string>
+    <string name="image_decrypt_label">رمزگشایی فایل ‎.cki (Turnypt)</string>
     <string name="image_sheet_title_encrypt">رمزنگاری تصویر</string>
     <string name="image_sheet_title_decrypt">رمزگشایی فایل تصویر</string>
     <string name="image_sheet_pick_cta">انتخاب تصویر برای رمزنگاری</string>

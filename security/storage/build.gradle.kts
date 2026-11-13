@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "org.cipherkey.security.storage"
+    namespace = "com.turnypt.security.storage"
     compileSdk = 36
 
     defaultConfig {

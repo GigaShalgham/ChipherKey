@@ -1,4 +1,4 @@
-# CipherKey Architecture
+# Turnypt Architecture
 
 ## Module graph (acyclic by construction)
 

@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "org.cipherkey.security.clipboard"
+    namespace = "com.turnypt.security.clipboard"
     compileSdk = 36
 
     defaultConfig {

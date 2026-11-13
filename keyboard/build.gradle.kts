@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "org.cipherkey.keyboard"
+    namespace = "com.turnypt.keyboard"
     compileSdk = 36
 
     defaultConfig {

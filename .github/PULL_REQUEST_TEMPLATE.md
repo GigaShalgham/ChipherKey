@@ -1,4 +1,4 @@
-<!-- Thank you for contributing to CipherKey. -->
+<!-- Thank you for contributing to Turnypt. -->
 
 ## Summary
 

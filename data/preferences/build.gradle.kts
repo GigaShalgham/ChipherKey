@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "org.cipherkey.data.preferences"
+    namespace = "com.turnypt.data.preferences"
     compileSdk = 36
 
     defaultConfig {

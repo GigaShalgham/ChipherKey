@@ -1,23 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Launcher icon: a key inside a shield silhouette -->
+<!--
+  Turnypt launcher icon foreground: the turnip mark (turnip + encrypt).
+
+  A cream turnip bulb with a keyhole cut out of its face (the vault),
+  three green leaves on top, on the deep aubergine background
+  (@color/ic_launcher_background). All geometry sits inside the Android
+  adaptive-icon safe zone (verified: max radius 29.26 of the r=33 zone,
+  i.e. ~11% margin), with the group scaled to 0.95 about the canvas
+  center and nudged down 2dp to sit optically centered.
+
+  v1.0.0 replaces the CipherKey shield-and-key mark (2015-2026 era
+  asset) as part of the Turnypt rebrand.
+-->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- shield -->
-    <path
-        android:fillColor="#4F7CFF"
-        android:pathData="M54,22 L80,32 C80,32 80,60 54,80 C28,60 28,32 28,32 Z" />
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.95"
+        android:scaleY="0.95"
+        android:translateY="2">
 
-    <!-- key head -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M47,38 a7,7 0 1,0 0.01,0 Z M52.5,45.5 L57,50 L53,54 L49.5,50.5 Z" />
+        <!-- side leaves (deeper green); bases tuck under the bulb crown -->
+        <path
+            android:fillColor="#4E9A57"
+            android:pathData="M51.5,40 Q48.9,29.5 39.2,26.8 Q41.9,36.6 51.5,40 Z" />
+        <path
+            android:fillColor="#4E9A57"
+            android:pathData="M56.5,40 Q59.1,29.5 68.8,26.8 Q66.1,36.6 56.5,40 Z" />
 
-    <!-- key shaft -->
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M55,48 L68,61 L64.5,64.5 L61,61 L58,64 L55,61 L51.5,57.5 Z" />
+        <!-- center leaf (fresh light green) -->
+        <path
+            android:fillColor="#93D489"
+            android:pathData="M54,39.5 C50,32.5 50,27 54,24.2 C58,27 58,32.5 54,39.5 Z" />
+
+        <!-- turnip bulb: flat crown, blunt taper to the root point -->
+        <path
+            android:fillColor="#F7F1E6"
+            android:pathData="M44,38.5 C48,37.3 60,37.3 64,38.5 C71,41 76.5,47 78,53.5 C79.6,60.5 75,67.5 70,72.5 C65,77 59,79.3 54,79.6 C49,79.3 43,77 38,72.5 C33,67.5 28.4,60.5 30,53.5 C31.5,47 37,41 44,38.5 Z" />
+
+        <!-- keyhole: ONE continuous path (circle arc over the top merges
+             into the flared wedge) — no seam, no even-odd overlap holes -->
+        <path
+            android:fillColor="#331B52"
+            android:pathData="M47.1,60.5 A8,8 0 1,1 60.9,60.5 L63.5,72.5 L44.5,72.5 Z" />
+    </group>
 </vector>
