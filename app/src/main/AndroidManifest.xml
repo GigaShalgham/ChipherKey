@@ -230,6 +230,82 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <data android:scheme="file" android:host="*" android:pathPattern=".*\\.cki" />
             </intent-filter>
+            <!--
+              v1.2.0 IMAGE OPEN-WITH (user report: "images must use the
+              correct image file extension, and Turnypt must be registered
+              as the default application for opening files with the
+              supported image extension"). Encrypted images now KEEP their
+              real image extension — they are indistinguishable from normal
+              images by name, so Turnypt registers as an opener for the
+              image types it supports and decides by CONTENT: the CKF1
+              magic means "encrypted, offer the decrypt"; anything else is
+              a normal image and the sheet offers to encrypt it instead.
+              Shapes mirror the .cki set above:
+                - content:// with an image MIME (MediaStore, gallery,
+                  most file managers) — one wildcard covers them all;
+                - content:// typed octet-stream whose path carries an image
+                  extension;
+                - file:// typed and untyped, same extension patterns;
+                - SEND with the same patterns so a camouflaged image can
+                  also be shared INTO the app (the magic sniff routes it).
+            -->
+            <intent-filter android:label="@string/image_open_label">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter android:label="@string/image_open_label">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.jpg" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.jpeg" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.png" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.webp" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.gif" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.bmp" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.heic" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.heif" />
+            </intent-filter>
+            <intent-filter android:label="@string/image_open_label">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.jpg" />
+                <data android:scheme="file" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.jpeg" />
+                <data android:scheme="file" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.png" />
+                <data android:scheme="file" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.webp" />
+                <data android:scheme="file" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.gif" />
+                <data android:scheme="file" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.bmp" />
+                <data android:scheme="file" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.heic" />
+                <data android:scheme="file" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.heif" />
+            </intent-filter>
+            <intent-filter android:label="@string/image_open_label">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.jpg" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.jpeg" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.png" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.webp" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.gif" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.bmp" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.heic" />
+                <data android:scheme="file" android:host="*" android:pathPattern=".*\\.heif" />
+            </intent-filter>
+            <!-- sharesheet: a camouflaged encrypted image shared from a
+                 file manager (octet-stream typed, image-named) -->
+            <intent-filter android:label="@string/image_open_label">
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.jpg" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.jpeg" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.png" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.webp" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.gif" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.bmp" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.heic" />
+                <data android:scheme="content" android:host="*" android:mimeType="*/*" android:pathPattern=".*\\.heif" />
+            </intent-filter>
         </activity>
 
         <!--

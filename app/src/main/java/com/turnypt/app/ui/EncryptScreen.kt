@@ -80,13 +80,18 @@ fun EncryptScreen(
                 uri,
                 ImageFiles.queryDisplayName(context, uri),
                 ImageFiles.querySize(context, uri),
+                // v1.2.0: the advertised type rides along so the encrypted
+                // output keeps the source's real image extension.
+                ImageFiles.queryMimeType(context, uri),
             )
         }
     }
-    // v0.6.0: where the .cki lands (SAF CreateDocument — user picks the
-    // location; nothing is written without this explicit target).
+    // v1.2.0: where the encrypted image lands (SAF CreateDocument — user
+    // picks the location; nothing is written without this explicit target).
+    // The file keeps its real image extension — it opens through Turnypt
+    // like any image, and the CKF1 content sniffing does the rest.
     val createCki = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument(Ckf1.MIME_TYPE),
+        ActivityResultContracts.CreateDocument("image/*"),
     ) { uri ->
         if (uri != null) viewModel.encryptImageTo(uri)
     }
@@ -182,37 +187,57 @@ fun EncryptScreen(
                 unlocked = state.unlocked,
                 onContactSelected = viewModel::selectContact,
             )
-            if (state.selectedContact != null && state.selectedContactId !in state.unlocked) {
+            if (state.selectedContact == null || state.selectedContactId in state.unlocked) {
+                if (!imageSegment) {
+                    Button(
+                        onClick = { viewModel.encrypt(input) },
+                        enabled = !state.busy,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(stringResource(R.string.encrypt_action)) }
+                } else {
+                    if (state.pickedImage != null) {
+                        CipherChip(
+                            preference = state.cipherPreference,
+                            resolvedName = state.resolvedCipherName,
+                            onClick = { cipherDialogOpen = true },
+                        )
+                    }
+                    Button(
+                        onClick = {
+                            val name = ImageFiles.suggestedEncryptedName(
+                                state.pickedImage?.displayName,
+                                state.pickedImage?.mime,
+                            )
+                            createCki.launch(name)
+                        },
+                        enabled = !state.busy && state.pickedImage != null,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(stringResource(R.string.image_encrypt_action)) }
+                }
+            }
+        }
+
+        // v1.2.0 (user report: "the password input in the encryption section
+        // is visually broken"): the unlock card is its OWN section — the
+        // same shape the Decrypt tab uses — and it is armed on the first
+        // appearance of the screen (ToolsViewModel.refresh), so the
+        // passphrase field, the live strength hint, the suggestion (when
+        // honest) and the fingerprint button always render together as one
+        // complete card instead of appearing piecemeal after extra taps.
+        if (state.selectedContact != null && state.selectedContactId !in state.unlocked) {
+            SectionCard(
+                title = stringResource(
+                    R.string.unlock_for_title,
+                    state.unlockContactName ?: state.selectedContact!!.displayName,
+                ),
+                icon = TurnyptIcons.Lock,
+            ) {
                 UnlockCard(
                     state = state,
                     onSubmit = viewModel::unlockAndContinue,
                     onUseFingerprint = viewModel::requestBiometricUnlock,
                     onCopyPassphrase = viewModel::copyPassphrase,
                 )
-            } else if (!imageSegment) {
-                Button(
-                    onClick = { viewModel.encrypt(input) },
-                    enabled = !state.busy,
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(stringResource(R.string.encrypt_action)) }
-            } else {
-                if (state.pickedImage != null) {
-                    CipherChip(
-                        preference = state.cipherPreference,
-                        resolvedName = state.resolvedCipherName,
-                        onClick = { cipherDialogOpen = true },
-                    )
-                }
-                Button(
-                    onClick = {
-                        val name = ImageFiles.suggestedEncryptedName(
-                            state.pickedImage?.displayName,
-                        )
-                        createCki.launch(name)
-                    },
-                    enabled = !state.busy && state.pickedImage != null,
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(stringResource(R.string.image_encrypt_action)) }
             }
         }
 
@@ -259,10 +284,13 @@ fun EncryptScreen(
                 state = state,
                 onShare = {
                     state.imageEncryptResult?.let { result ->
+                        // v1.2.0: the encrypted image keeps its real image
+                        // extension — share it AS an image so receivers treat
+                        // it like one (legacy .cki files keep their own mime).
                         ImageShare.uri(
                             context,
                             Uri.parse(result.outputUriString),
-                            Ckf1.MIME_TYPE,
+                            ImageFiles.mimeForName(result.displayName) ?: Ckf1.MIME_TYPE,
                             context.getString(R.string.image_share_action),
                         )
                     }

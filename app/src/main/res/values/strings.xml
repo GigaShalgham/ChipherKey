@@ -28,6 +28,9 @@
     <string name="passphrase_label">Shared passphrase</string>
     <string name="passphrase_for">Passphrase for %1$s</string>
     <string name="message_from">Message from %1$s</string>
+    <!-- v1.2.0: the Encrypt tab's unlock section carries its own title now
+         (the same shape the Decrypt tab uses). -->
+    <string name="unlock_for_title">Unlock %1$s</string>
     <string name="locked_hint">This session is locked. Enter the shared passphrase — or use your fingerprint.</string>
     <!-- v0.4.0: old-key-era envelopes ask for the passphrase of the era they
          were sent under, which may predate the current one. -->
@@ -288,7 +291,7 @@
 
     <!-- Image encrypt flow -->
     <string name="image_pick_action">Choose image</string>
-    <string name="image_pick_hint">Pick an image — it is encrypted on this device and saved as a .cki file you can send like any attachment.</string>
+    <string name="image_pick_hint">Pick an image — it is encrypted on this device and saved as a normal image file you can send like any attachment. Opening it in Turnypt decrypts it.</string>
     <string name="image_replace_action">Choose another image</string>
     <string name="image_encrypt_action">Encrypt &amp; save</string>
     <string name="image_encrypting">Encrypting…</string>
@@ -300,8 +303,8 @@
     <string name="notice_image_pick_first">Choose an image first.</string>
 
     <!-- Image decrypt flow -->
-    <string name="image_pick_cki_action">Choose .cki file</string>
-    <string name="image_pick_cki_hint">Pick a file encrypted by Turnypt (it ends in .cki). The contact is recognized from the file itself.</string>
+    <string name="image_pick_cki_action">Choose encrypted file</string>
+    <string name="image_pick_cki_hint">Pick an image or .cki file encrypted by Turnypt — encrypted images keep their real image extension. The contact is recognized from the file itself.</string>
     <string name="image_decrypt_action">Decrypt</string>
     <string name="image_decrypting">Decrypting…</string>
     <string name="image_result_decrypt_title">Decrypted — from %1$s</string>
@@ -334,6 +337,11 @@
     <!-- Companion image flows (sharesheet labels — keep short) -->
     <string name="image_encrypt_label">Encrypt image (Turnypt)</string>
     <string name="image_decrypt_label">Decrypt .cki file (Turnypt)</string>
+    <!-- v1.2.0: Turnypt is registered as an opener for the image types it
+         supports, so an encrypted image (which keeps its real image
+         extension) opens straight into the decrypt flow. -->
+    <string name="image_open_label">Open with Turnypt</string>
+    <string name="image_encrypt_instead_action">Encrypt this image with Turnypt</string>
     <string name="image_sheet_title_encrypt">Encrypt image</string>
     <string name="image_sheet_title_decrypt">Decrypt image file</string>
     <string name="image_sheet_pick_cta">Choose image to encrypt</string>

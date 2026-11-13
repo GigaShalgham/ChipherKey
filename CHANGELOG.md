@@ -9,6 +9,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-13 — Image extensions, unlock fixes, navigation fixes
+
+The four user reports on the 1.1.0 release, each traced to its root cause
+and fixed at the source.
+
+### Changed
+
+- **Encrypted images keep their real image extension** (user report:
+  "images are still saved or exported with the .cki extension — image
+  files must use the correct image file extension"): the Encrypt tab and
+  the companion sheet now suggest the SOURCE's own name for the encrypted
+  output (`photo.jpg` → `photo.jpg`; an extension-less name derives it
+  from the advertised MIME), the SAF create dialog is an image create, and
+  the finished file shares with the matching image MIME so messengers
+  treat it as an image attachment. What is encrypted is decided by
+  CONTENT — the CKF1 magic — never by the name. Sources that are not
+  recognizable as images keep the legacy `<name>.cki` +
+  `application/x-cipherkey` output, and every `.cki` file ever written
+  keeps opening exactly as before.
+- **Turnypt is registered as an opener for the supported image types**
+  (user report: "Turnypt must be the default application for opening
+  files with the supported image extension"): `ACTION_VIEW` intent
+  filters (content/file, typed and extension-matched, mirroring the
+  proven .cki shapes) make the OS offer Turnypt — and let the user set it
+  as default — for jpg/jpeg/png/webp/gif/bmp/heic/heif. Opening an
+  encrypted image lands straight in the decrypt flow (magic sniff); a
+  normal image gets an honest "not encrypted by Turnypt" notice plus an
+  "Encrypt this image instead" button, so the registration never dead-
+  ends. Sharing an image INTO the app sniffs the magic too: encrypted →
+  decrypt, plain → encrypt (the old name-based heuristic misrouted
+  camouflaged files into the encrypt flow).
+
+### Fixed
+
+- **The password unlock bricked the Encrypt tab** (user report: "the
+  password input does not function correctly"): on a standalone open (no
+  text and no image queued), the unlock's success path never reset the
+  `busy` flag — after typing the passphrase the Encrypt button stayed
+  disabled forever. Both unlock paths (passphrase and fingerprint) now
+  reset it; the continuations set it again themselves.
+- **A finished draft could re-encrypt itself later**: the pending text
+  was never consumed after a successful encrypt/decrypt, so a later
+  unlock of a locked contact silently re-ran the old message. Drafts are
+  consumed on completion, and switching contacts discards any queued
+  continuation (it belonged to the old contact).
+- **The fingerprint button only appeared after extra taps** (user report:
+  "it shows up only after opening the list, clicking a contact and
+  another loading cycle"): the initial screen load restored the sticky
+  contact but never armed the unlock card — only an explicit contact
+  click computed the fingerprint offer. `refresh()` now arms the card
+  (pending state, honest suggestion gate, fingerprint offer) on first
+  appearance. The Encrypt tab's unlock card also moved into its own
+  titled section — the same shape the Decrypt tab uses — so the
+  passphrase field, strength hint, suggestion and fingerprint button
+  always render as one complete, stable card.
+- **The bottom navigation bar never highlighted Encrypt/Decrypt and taps
+  looked dead** (user report: "clicking does not consistently work; the
+  bar fails to reflect the active page"): those two destinations live in
+  the nav graph under query-pattern routes (`encrypt?mode={mode}`), and
+  the selected-state check compared the bare tab route against the full
+  pattern — never a match, on any screen. Selection now matches on the
+  base route, and tapping the tab you are on resets any deep-link
+  arguments to the tab's default state (a visible response instead of an
+  apparent no-op).
+
 ## [1.1.0] - 2026-11-13 — TNP1:/TNS1: wire prefixes, contact-open fixes
 
 The user's two reports on top of the 1.0.0 rebrand, plus the prefix

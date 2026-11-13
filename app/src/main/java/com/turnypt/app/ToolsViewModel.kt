@@ -1,13 +1,11 @@
 package com.turnypt.app
 
-import android.content.Context
 import android.net.Uri
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.net.URI
 import javax.inject.Inject
@@ -52,11 +50,15 @@ import com.turnypt.security.clipboard.ClipboardRead
 
 /**
  * v0.6.0: the image the user picked for encryption (SAF or sharesheet).
+ * v1.2.0: [mime] carries the source's advertised type — the encrypted
+ * output keeps the source's real image extension, and the mime is what
+ * derives it when the provider hands over an extension-less name.
  */
 data class PickedImageSource(
     val uriString: String,
     val displayName: String,
     val sizeBytes: Long?,
+    val mime: String? = null,
 )
 
 /** v0.6.0: a finished image encryption — the .cki file was streamed out. */
@@ -166,7 +168,6 @@ class ToolsViewModel @Inject constructor(
     private val biometricStore: BiometricKeyStore,
     private val algorithmSource: CipherAlgorithmSource,
     private val streams: ContentResolverStreams,
-    @ApplicationContext private val appContext: Context,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ToolsUiState())
@@ -229,7 +230,17 @@ class ToolsViewModel @Inject constructor(
         }
     }
 
-    /** Loads contacts and their unlock status. */
+    /**
+     * Loads contacts and their unlock status.
+     *
+     * v1.2.0 (user report: "the fingerprint button only appears after
+     * opening the list, clicking a contact and another loading cycle"):
+     * restoring the sticky/first contact on load now ARMS the unlock card
+     * exactly like an explicit click does — pending state, the honest
+     * suggestion gate and the fingerprint offer are all computed on the
+     * FIRST appearance of the screen, not only after the user re-selects
+     * the contact by hand.
+     */
     fun refresh() {
         launchSafely {
             val contacts = contactsRepository.observeContacts().first()
@@ -245,6 +256,7 @@ class ToolsViewModel @Inject constructor(
                 unlocked = unlocked,
                 selectedContactId = selected,
             )
+            if (selected != null) armUnlockForSelection(selected)
         }
     }
 
@@ -266,6 +278,15 @@ class ToolsViewModel @Inject constructor(
      */
     private fun armUnlockForSelection(id: ContactId) {
         launchSafely {
+            // v1.2.0: switching to a DIFFERENT contact discards any pending
+            // continuation — a queued text/image operation belongs to the
+            // contact it was started for (the image closure even captured
+            // that contact's id), and a stale draft must never surprise
+            // re-encrypt after the user picked someone else.
+            if (_state.value.pendingContactId != null && _state.value.pendingContactId != id) {
+                pendingText = null
+                pendingImageOp = null
+            }
             if (messageCipher.isUnlocked(id)) {
                 if (_state.value.unlockNeeded || _state.value.pendingContactId != null) {
                     _state.value = _state.value.copy(
@@ -333,13 +354,16 @@ class ToolsViewModel @Inject constructor(
      * The user picked an image (OpenDocument / photo picker / sharesheet):
      * record it as the encryption source. Decryption results from a
      * previous flow are cleared so the UI tells one story at a time.
+     * v1.2.0: the advertised [mime] rides along so the encrypted output
+     * can keep the source's real image extension.
      */
-    fun pickImage(uri: Uri, displayName: String?, sizeBytes: Long?) {
+    fun pickImage(uri: Uri, displayName: String?, sizeBytes: Long?, mime: String? = null) {
         _state.value = _state.value.copy(
             pickedImage = PickedImageSource(
                 uriString = uri.toString(),
                 displayName = displayName?.takeIf { it.isNotBlank() } ?: "image",
                 sizeBytes = sizeBytes,
+                mime = mime,
             ),
             imageEncryptResult = null,
             imageDecryptResult = null,
@@ -501,8 +525,11 @@ class ToolsViewModel @Inject constructor(
         when (outcome) {
             is MediaEncryptOutcome.Encrypted -> {
                 settings.setLastContactId(contactId.value)
-                val savedName = ImageFiles.queryDisplayName(appContext, outputUri)
-                    ?: ImageFiles.suggestedEncryptedName(_state.value.pickedImage?.displayName)
+                val savedName = streams.queryDisplayName(outputUri)
+                    ?: ImageFiles.suggestedEncryptedName(
+                        _state.value.pickedImage?.displayName,
+                        _state.value.pickedImage?.mime,
+                    )
                 _state.value = _state.value.copy(
                     busy = false,
                     imageBusy = false,
@@ -555,10 +582,7 @@ class ToolsViewModel @Inject constructor(
         }
         // Fresh private cache file; the previous one (if any) is wiped.
         decryptCacheFile?.delete()
-        val cache = File(
-            appContext.cacheDir,
-            "ck_decrypt_${System.currentTimeMillis()}.bin",
-        )
+        val cache = streams.newDecryptCacheFile()
         val outcome = try {
             cache.outputStream().use { target ->
                 mediaCipher.decryptFile(input, target) { done ->
@@ -682,7 +706,14 @@ class ToolsViewModel @Inject constructor(
                 }
                 when (outcome) {
                     UnlockOutcome.Unlocked, UnlockOutcome.AlreadyUnlocked -> {
+                        // v1.2.0: busy resets HERE (user report: "the
+                        // password input does not function correctly") — a
+                        // standalone open has no follow-up operation that
+                        // would ever reset it, so the Encrypt button used to
+                        // stay disabled forever after typing the passphrase.
+                        // The continuations below set busy themselves.
                         _state.value = _state.value.copy(
+                            busy = false,
                             unlocked = if (eraSessionId != null) {
                                 _state.value.unlocked
                             } else {
@@ -706,8 +737,13 @@ class ToolsViewModel @Inject constructor(
                         }
                         if (imageOp != null) {
                             pendingImageOp = null
+                            // The image continuation supersedes any text one.
+                            pendingText = null
                             imageOp()
                         } else if (text != null) {
+                            // v1.2.0: the draft is consumed — a later
+                            // standalone unlock must never re-run it.
+                            pendingText = null
                             when (pendingMode) {
                                 CompanionMode.ENCRYPT -> encryptInternal(id, text)
                                 CompanionMode.DECRYPT -> decryptInternal(text)
@@ -827,7 +863,11 @@ class ToolsViewModel @Inject constructor(
             val contactKey = biometricContactKeyFor(id)
             when (messageCipher.unlockContactWithKey(id, keyBytes)) {
                 UnlockOutcome.Unlocked, UnlockOutcome.AlreadyUnlocked -> {
+                    // v1.2.0: busy resets here for the same reason as the
+                    // passphrase path — a standalone fingerprint unlock
+                    // left it stuck true and disabled every action.
                     _state.value = _state.value.copy(
+                        busy = false,
                         unlocked = _state.value.unlocked + id,
                         unlockNeeded = false,
                         notice = null,
@@ -839,8 +879,11 @@ class ToolsViewModel @Inject constructor(
                     val imageOp = pendingImageOp
                     if (imageOp != null) {
                         pendingImageOp = null
+                        pendingText = null
                         imageOp()
                     } else {
+                        // v1.2.0: consumed — never re-run by a later unlock.
+                        pendingText = null
                         when (pendingMode) {
                             CompanionMode.ENCRYPT ->
                                 if (text != null) encryptInternal(id, text)
@@ -1044,6 +1087,9 @@ class ToolsViewModel @Inject constructor(
         when (val out = messageCipher.encryptDraft(contactId, draft)) {
             is EncryptOutcome.Encrypted -> {
                 settings.setLastContactId(contactId.value)
+                // v1.2.0: the draft is consumed — a later unlock of any
+                // contact must never re-encrypt a message from the past.
+                pendingText = null
                 _state.value = _state.value.copy(
                     busy = false,
                     resultText = out.envelope,
@@ -1087,13 +1133,17 @@ class ToolsViewModel @Inject constructor(
     private suspend fun decryptInternal(envelope: String) {
         _state.value = _state.value.copy(busy = true, notice = null)
         when (val out = messageCipher.decryptEnvelope(envelope)) {
-            is DecryptOutcome.Decrypted -> _state.value = _state.value.copy(
-                busy = false,
-                resultText = out.plaintext,
-                resultContactName = out.contactName,
-                resultIsEnvelope = false,
-                copied = false,
-            )
+            is DecryptOutcome.Decrypted -> {
+                // v1.2.0: consumed (see the encrypt outcome above).
+                pendingText = null
+                _state.value = _state.value.copy(
+                    busy = false,
+                    resultText = out.plaintext,
+                    resultContactName = out.contactName,
+                    resultIsEnvelope = false,
+                    copied = false,
+                )
+            }
             is DecryptOutcome.NeedsUnlock -> _state.value = _state.value.copy(
                 busy = false,
                 unlockNeeded = true,

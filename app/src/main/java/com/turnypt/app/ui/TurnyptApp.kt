@@ -52,15 +52,45 @@ fun TurnyptApp() {
         bottomBar = {
             NavigationBar {
                 destinations.forEach { destination ->
+                    // v1.2.0 (user report: "the bottom navigation bar fails to
+                    // reflect the active page, and taps seem dead"): the
+                    // Encrypt/Decrypt destinations live in the graph under
+                    // QUERY-PATTERN routes ("encrypt?mode={mode}") — the old
+                    // exact `it.route == destination.route` compared
+                    // "encrypt" against that pattern and NEVER matched, so
+                    // both tabs stayed unselected no matter what was on
+                    // screen (and a retap, restoring the same state, looked
+                    // like a dead click). Matching on the base route — the
+                    // pattern before the '?' — keeps every tab honestly
+                    // selected, whatever arguments it was opened with.
                     val selected = backStackEntry?.destination?.hierarchy
-                        ?.any { it.route == destination.route } == true
+                        ?.any { it.route?.substringBefore('?') == destination.route } == true
                     NavigationBarItem(
                         selected = selected,
                         onClick = {
-                            navController.navigate(destination.route) {
-                                popUpTo(navController.graph.startDestinationId) { saveState = true }
-                                launchSingleTop = true
-                                restoreState = true
+                            val currentBase =
+                                backStackEntry?.destination?.route?.substringBefore('?')
+                            if (currentBase == destination.route) {
+                                // Already on this tab. If it was deep-linked
+                                // with non-default arguments (e.g. the image
+                                // segment via Home), one tap returns the tab
+                                // to its default state — a visible, honest
+                                // response; at the default it is a no-op,
+                                // like every standard bottom bar.
+                                val mode = backStackEntry?.arguments
+                                    ?.getString(DestinationRoute.ARG_MODE)
+                                if (mode != null && mode != DestinationRoute.MODE_TEXT) {
+                                    navController.navigate(destination.route) {
+                                        launchSingleTop = true
+                                        restoreState = false
+                                    }
+                                }
+                            } else {
+                                navController.navigate(destination.route) {
+                                    popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
                         },
                         icon = { Icon(destination.icon, contentDescription = null) },

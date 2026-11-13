@@ -27,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +52,6 @@ import com.turnypt.app.ui.ImageShare
 import com.turnypt.app.ui.NoticeBanner
 import com.turnypt.app.ui.PickedImageCard
 import com.turnypt.app.ui.PassphraseInput
-import com.turnypt.app.ui.ScreenHeader
 import com.turnypt.app.ui.BusyLine
 import com.turnypt.app.ui.CipherPreferenceDialog
 import com.turnypt.app.ui.theme.TurnyptTheme
@@ -71,6 +69,13 @@ import com.turnypt.data.preferences.CipherPreference
  *    a .cki file;
  *  - no payload (floating assistant) → in-sheet image picker.
  *
+ * v1.2.0: encrypted images now keep their real image extension (the
+ * camouﬂage), so the sheet is also the system's image opener: ACTION_VIEW
+ * of ANY image lands here, the CKF1 magic decides decrypt vs. "not
+ * encrypted", and an unencrypted image offers the encrypt flow instead of
+ * a dead end. SEND routing is likewise content-based (magic sniff), not
+ * name-based.
+ *
  * Companion discipline as everywhere: FLAG_SECURE (no screenshots/recents
  * of decrypted content), noHistory + excludeFromRecents in the manifest,
  * and the passphrase field is never persisted in view state.
@@ -86,8 +91,17 @@ class ImageCipherActivity : FragmentActivity() {
     @Inject
     lateinit var biometrics: BiometricKeyStore
 
-    /** What the sheet is doing (from the launch intent). */
-    private var sheetMode = SheetMode.PICKER_ENCRYPT
+    /**
+     * What the sheet is doing. v1.2.0: Compose state — the sheet can flip
+     * itself from the decrypt dead-end into the encrypt flow when the user
+     * opened a normal image ("Encrypt this image instead").
+     */
+    private var sheetMode by mutableStateOf(SheetMode.PICKER_ENCRYPT)
+
+    /** v1.2.0: what a VIEW intent handed over (for that fallback). */
+    private var pendingViewUri: Uri? = null
+    private var pendingViewName: String? = null
+    private var pendingViewMime: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -106,10 +120,24 @@ class ImageCipherActivity : FragmentActivity() {
                     viewModel = viewModel,
                     biometrics = biometrics,
                     mode = sheetMode,
+                    canEncryptInstead = pendingViewUri != null,
+                    onEncryptInstead = ::switchToEncrypt,
                     onClose = { finish() },
                 )
             }
         }
+    }
+
+    /** v1.2.0: VIEW landed on a plain image — offer the encrypt flow. */
+    private fun switchToEncrypt() {
+        val uri = pendingViewUri ?: return
+        sheetMode = SheetMode.ENCRYPT_SHARED
+        viewModel.pickImage(
+            uri,
+            pendingViewName,
+            ImageFiles.querySize(this, uri),
+            pendingViewMime,
+        )
     }
 
     private fun dispatchIntent(intent: Intent) {
@@ -126,24 +154,34 @@ class ImageCipherActivity : FragmentActivity() {
                 }
                 val displayName = ImageFiles.queryDisplayName(this, shared)
                 val size = ImageFiles.querySize(this, shared)
-                if (ImageFiles.isImageMime(intent.type) ||
-                    displayName?.endsWith(".${Ckf1.FILE_EXTENSION}") != true
-                ) {
-                    // An image (or anything the user wants encrypted): the
-                    // encrypt flow. CKF1 is file-type agnostic by design.
-                    sheetMode = SheetMode.ENCRYPT_SHARED
-                    viewModel.pickImage(shared, displayName, size)
-                } else {
+                val mime = intent.type ?: ImageFiles.queryMimeType(this, shared)
+                // v1.2.0: route by CONTENT, not by name/mime. An encrypted
+                // image now carries a real image extension and an image
+                // MIME — the old heuristic pushed it straight into the
+                // ENCRYPT flow. The CKF1 magic is the one honest signal;
+                // anything without it is something the user wants sealed.
+                if (ImageFiles.sniffsCkf1(this, shared)) {
                     sheetMode = SheetMode.DECRYPT_SHARED
                     viewModel.decryptImageFrom(shared, displayName)
+                } else {
+                    sheetMode = SheetMode.ENCRYPT_SHARED
+                    viewModel.pickImage(shared, displayName, size, mime)
                 }
             }
             Intent.ACTION_VIEW -> {
                 val data = intent.data
-                if (data != null) {
-                    sheetMode = SheetMode.DECRYPT_SHARED
-                    viewModel.decryptImageFrom(data, ImageFiles.queryDisplayName(this, data))
+                if (data == null) {
+                    sheetMode = SheetMode.PICKER_ENCRYPT
+                    return
                 }
+                // Registered as an image opener now: most images are NOT
+                // Turnypt files — the decrypt attempt reports that honestly
+                // and the sheet offers "Encrypt this image instead".
+                sheetMode = SheetMode.DECRYPT_SHARED
+                pendingViewUri = data
+                pendingViewName = ImageFiles.queryDisplayName(this, data)
+                pendingViewMime = intent.type ?: ImageFiles.queryMimeType(this, data)
+                viewModel.decryptImageFrom(data, pendingViewName)
             }
             // Launched from the floating assistant / Home: pick inside.
             else -> sheetMode = SheetMode.PICKER_ENCRYPT
@@ -156,11 +194,13 @@ private fun ImageCipherSheet(
     viewModel: ToolsViewModel,
     biometrics: BiometricKeyStore,
     mode: SheetMode,
+    canEncryptInstead: Boolean,
+    onEncryptInstead: () -> Unit,
     onClose: () -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val promptHelper = rememberBiometricPromptHelper(biometrics)
-    var cipherDialogOpen by remember { mutableStateOf(false) }
+    var cipherDialogOpen by androidx.compose.runtime.remember { mutableStateOf(false) }
     val context = androidx.compose.ui.platform.LocalContext.current
 
     LaunchedEffect(Unit) { viewModel.refresh() }
@@ -180,6 +220,7 @@ private fun ImageCipherSheet(
                 uri,
                 ImageFiles.queryDisplayName(context, uri),
                 ImageFiles.querySize(context, uri),
+                ImageFiles.queryMimeType(context, uri),
             )
         }
     }
@@ -190,8 +231,11 @@ private fun ImageCipherSheet(
             viewModel.decryptImageFrom(uri, ImageFiles.queryDisplayName(context, uri))
         }
     }
+    // v1.2.0: the encrypted output keeps its real image extension — the
+    // create dialog is an image create, and the suggested name is the
+    // source's own name.
     val createCki = androidx.activity.compose.rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument(Ckf1.MIME_TYPE),
+        ActivityResultContracts.CreateDocument("image/*"),
     ) { uri ->
         if (uri != null) viewModel.encryptImageTo(uri)
     }
@@ -274,6 +318,19 @@ private fun ImageCipherSheet(
                     },
                     onClear = viewModel::clearImageResult,
                 )
+                // v1.2.0: the sheet is an image OPENER now — an opened image
+                // that Turnypt did not encrypt is not an error to dead-end
+                // on. Offer the encrypt flow right where the user looks.
+                if (canEncryptInstead &&
+                    state.imageDecryptResult == null &&
+                    !state.imageBusy &&
+                    state.notice?.res == R.string.notice_not_cipher_file
+                ) {
+                    OutlinedButton(
+                        onClick = onEncryptInstead,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(stringResource(R.string.image_encrypt_instead_action)) }
+                }
             }
         } else {
             // ------------------------------------------------------ ENCRYPT
@@ -335,7 +392,10 @@ private fun ImageCipherSheet(
                 Button(
                     onClick = {
                         createCki.launch(
-                            ImageFiles.suggestedEncryptedName(state.pickedImage?.displayName),
+                            ImageFiles.suggestedEncryptedName(
+                                state.pickedImage?.displayName,
+                                state.pickedImage?.mime,
+                            ),
                         )
                     },
                     enabled = !state.busy && state.pickedImage != null,
@@ -347,10 +407,13 @@ private fun ImageCipherSheet(
                 state = state,
                 onShare = {
                     state.imageEncryptResult?.let { result ->
+                        // v1.2.0: the encrypted image shares AS an image
+                        // (real extension → real MIME); legacy .cki outputs
+                        // keep their own type.
                         ImageShare.uri(
                             context,
                             Uri.parse(result.outputUriString),
-                            Ckf1.MIME_TYPE,
+                            ImageFiles.mimeForName(result.displayName) ?: Ckf1.MIME_TYPE,
                             context.getString(R.string.image_share_action),
                         )
                     }

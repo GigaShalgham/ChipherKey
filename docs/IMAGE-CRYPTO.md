@@ -70,7 +70,15 @@ offset size field
   Poly1305 per chunk — recorded in the file, so any receiver with any
   preference decrypts it. Security is identical (256-bit key, AEAD,
   128-bit tag).
-- Suggested file name: `<original>.cki`, MIME `application/x-cipherkey`.
+- Suggested file name (v1.2.0): an encrypted IMAGE keeps the source's real
+  image extension (`photo.jpg` → `photo.jpg`) and shares with the matching
+  image MIME — the file looks like (and is handled as) a normal image, and
+  Turnypt — registered as an opener for those extensions — decrypts it by
+  sniffing the CKF1 magic. Sources that are not recognizable as images
+  keep the legacy `<original>.cki` name and `application/x-cipherkey`
+  MIME; those files keep opening through the `.cki` filters as before.
+  What is encrypted is decided by CONTENT (the magic bytes), never by the
+  name — the camouflage never hides a file from the app itself.
 
 Text messages stay on the frozen `CK1:` wire format — untouched.
 
@@ -106,16 +114,19 @@ Home (Quick Access)
 Encrypt tab  ──[ Text | Image ]──▶  Image: pick image (SAF) → same ContactPicker
                                     → same unlock card (passphrase + fingerprint)
                                     → cipher chip (Automatic/AES/ChaCha) → Encrypt
-                                    → CreateDocument "name.cki" → saved + share
-Decrypt tab  ──[ Text | Image ]──▶  Image: pick .cki (SAF) → contact auto-resolved
-                                    from keyId → unlock if needed → decrypted to
-                                    private cache → preview (downsampled) →
-                                    Save image (CreateDocument) / Share
+                                    → CreateDocument "name.jpg" (real image
+                                      extension kept) → saved + share as image
+Decrypt tab  ──[ Text | Image ]──▶  Image: pick encrypted file (SAF) → contact
+                                    auto-resolved from keyId → unlock if needed
+                                    → decrypted to private cache → preview
+                                    (downsampled) → Save image / Share
 
 Sharesheet / file managers                (external entry points, same engine)
-├── SEND image/*           → ImageCipherActivity → encrypt flow
+├── SEND image/*           → ImageCipherActivity → magic sniff: CKF1 → decrypt,
+│                            anything else → encrypt flow
 ├── SEND x-cipherkey       → ImageCipherActivity → decrypt flow
-└── VIEW content x-cipherkey → same decrypt flow
+└── VIEW content (image/* or image extension) → decrypt attempt; a plain
+     image offers "Encrypt this image instead" (no dead end)
 
 Floating assistant panel
 └── "Encrypt image" row    → ImageCipherActivity picker mode
