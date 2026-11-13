@@ -178,8 +178,10 @@ unchanged from the pre-rebrand vector — only the written prefix moved.
 
 ## CKF1 — the file container (v0.6.0)
 
-Images (and any large file) travel as a **CKF1** container (extension
-`.cki`, MIME `application/x-cipherkey`) instead of a base64 envelope —
+Images (and any large file) travel as a **CKF1** container (legacy
+extension `.cki`, MIME `application/x-cipherkey`; encrypted images also
+carry the Turnypt-ecosystem `.tnpi` name layer, MIME
+`application/x-turnypt-image` — v1.3.0) instead of a base64 envelope —
 same key era, same Argon2id passphrase, same contact. Full design:
 `docs/IMAGE-CRYPTO.md`. Layout (all integers big-endian):
 
@@ -212,3 +214,12 @@ offset size field
 > invisible bytes inside every .cki file ever written; renaming them buys
 > no visible identity and would churn the file ecosystem. Only the
 > user-visible text prefixes moved (TNP1:/TNS1:, legacy readable).
+
+> v1.3.0 naming note: the container bytes are untouched — the magic, the
+> keyId and the chunk layout are identical for every file. What moved is
+> the NAME layer only: an encrypted image is now written
+> `<original>.tnpi` (MIME `application/x-turnypt-image`, the file sibling
+> of the TNP1:/TNS1: wire prefixes) instead of inheriting `.cki` or the
+> source's own image extension, and the OS offers Turnypt for opening
+> `.tnpi` files. Every `.cki` file ever written keeps opening unchanged,
+> and detection is always by CONTENT (the magic), never by the name.

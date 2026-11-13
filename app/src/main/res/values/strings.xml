@@ -291,7 +291,7 @@
 
     <!-- Image encrypt flow -->
     <string name="image_pick_action">Choose image</string>
-    <string name="image_pick_hint">Pick an image — it is encrypted on this device and saved as a normal image file you can send like any attachment. Opening it in Turnypt decrypts it.</string>
+    <string name="image_pick_hint">Pick an image — it is encrypted on this device and saved as a Turnypt image file (photo.jpg.tnpi) you can send like any attachment. Opening it in Turnypt decrypts it.</string>
     <string name="image_replace_action">Choose another image</string>
     <string name="image_encrypt_action">Encrypt &amp; save</string>
     <string name="image_encrypting">Encrypting…</string>
@@ -304,7 +304,7 @@
 
     <!-- Image decrypt flow -->
     <string name="image_pick_cki_action">Choose encrypted file</string>
-    <string name="image_pick_cki_hint">Pick an image or .cki file encrypted by Turnypt — encrypted images keep their real image extension. The contact is recognized from the file itself.</string>
+    <string name="image_pick_cki_hint">Pick a .tnpi or .cki file encrypted by Turnypt — encrypted images carry the .tnpi extension. The contact is recognized from the file itself.</string>
     <string name="image_decrypt_action">Decrypt</string>
     <string name="image_decrypting">Decrypting…</string>
     <string name="image_result_decrypt_title">Decrypted — from %1$s</string>
@@ -337,10 +337,10 @@
     <!-- Companion image flows (sharesheet labels — keep short) -->
     <string name="image_encrypt_label">Encrypt image (Turnypt)</string>
     <string name="image_decrypt_label">Decrypt .cki file (Turnypt)</string>
-    <!-- v1.2.0: Turnypt is registered as an opener for the image types it
-         supports, so an encrypted image (which keeps its real image
-         extension) opens straight into the decrypt flow. -->
-    <string name="image_open_label">Open with Turnypt</string>
+    <!-- v1.3.0: Turnypt is registered as an opener for its own .tnpi
+         extension (the Turnypt-ecosystem image suffix), so an encrypted
+         image opens straight into the decrypt flow. -->
+    <string name="image_decrypt_tnpi_label">Decrypt .tnpi image (Turnypt)</string>
     <string name="image_encrypt_instead_action">Encrypt this image with Turnypt</string>
     <string name="image_sheet_title_encrypt">Encrypt image</string>
     <string name="image_sheet_title_decrypt">Decrypt image file</string>

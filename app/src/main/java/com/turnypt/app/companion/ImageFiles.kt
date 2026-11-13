@@ -23,15 +23,26 @@ import com.turnypt.core.crypto.Ckf1
  * image preview decoding — kept free of framework state so they are
  * trivially testable.
  *
- * v1.2.0 (user report: "images are still saved with the .cki extension"):
- * encrypted IMAGES now keep the source's real image extension — the file
- * looks like (and is handled as) a normal image, and Turnypt — registered
- * as an opener for those image extensions — sniffs the CKF1 magic to offer
- * the decrypt. Which file is encrypted is decided by CONTENT (the magic
- * bytes), never by the name, so the camouflage never hides the file from
- * the app itself.
+ * v1.3.0 (user ruling on the 1.2.0 approach — "the extension must carry
+ * the Turnypt theme: not .cki and not the source's own image extension,
+ * and Turnypt must be suggested for opening files with that extension"):
+ * encrypted images are named in the TNP family, `<name>.tnpi`, with the
+ * dedicated `application/x-turnypt-image` MIME. What is encrypted is
+ * still decided by CONTENT (the CKF1 magic), never by the name, and every
+ * `.cki` file ever written keeps opening exactly as before.
  */
 object ImageFiles {
+
+    /**
+     * v1.3.0: the Turnypt-ecosystem extension for encrypted images —
+     * the file family of the TNP1:/TNS1: wire prefixes. An encrypted
+     * photo is saved as `photo.jpg.tnpi`; opening any `.tnpi` file
+     * suggests Turnypt.
+     */
+    const val ENCRYPTED_IMAGE_EXTENSION: String = "tnpi"
+
+    /** The MIME type paired with [.ENCRYPTED_IMAGE_EXTENSION]. */
+    const val ENCRYPTED_IMAGE_MIME: String = "application/x-turnypt-image"
 
     /**
      * The image extensions Turnypt supports (and registers to open):
@@ -54,6 +65,10 @@ object ImageFiles {
         return ext.isNotEmpty() && ext in IMAGE_EXTENSIONS
     }
 
+    /** True when [name] carries the Turnypt image suffix (".tnpi"). */
+    fun hasEncryptedImageExtension(name: String): Boolean =
+        name.substringAfterLast('.', "").lowercase(Locale.US) == ENCRYPTED_IMAGE_EXTENSION
+
     /** "photo.jpg" -> "image/jpeg"; null for unknown/absent extensions. */
     fun mimeForName(name: String?): String? {
         val base = name?.substringAfterLast('/') ?: return null
@@ -73,37 +88,75 @@ object ImageFiles {
     }
 
     /**
-     * The suggested name for an ENCRYPTED image (v1.2.0):
+     * The suggested name for an ENCRYPTED image (v1.3.0):
      *
-     *  - "photo.jpg" -> "photo.jpg" — the image keeps its real extension
-     *    (the camouflage: it opens through Turnypt like any image);
-     *  - a name with no extension but a known image MIME derives it:
-     *    "IMG_001" + image/png -> "IMG_001.png";
-     *  - anything that is not recognizable as an image keeps the legacy
-     *    ".cki" suffix — those files still open through the .cki filters.
+     *  - an image source joins the TNP family: `photo.jpg` →
+     *    `photo.jpg.tnpi` (the original name is kept intact inside, so
+     *    decrypting restores it exactly);
+     *  - an extension-less name with a known image MIME derives the real
+     *    image extension first: "IMG_001" + image/png → `IMG_001.png.tnpi`;
+     *  - names already carrying `.tnpi` or the legacy `.cki` pass through
+     *    unchanged (never double suffixed);
+     *  - anything not recognizable as an image keeps the legacy
+     *    `<name>.cki` suffix — those files still open through the .cki
+     *    filters as before.
      */
     fun suggestedEncryptedName(displayName: String?, mime: String? = null): String {
         val base = displayName?.substringAfterLast('/')?.takeIf { it.isNotBlank() }
-            ?: return "image.${Ckf1.FILE_EXTENSION}"
-        if (hasImageExtension(base)) return base
+            ?: return "image.$ENCRYPTED_IMAGE_EXTENSION"
         if (base.endsWith(".${Ckf1.FILE_EXTENSION}", ignoreCase = true)) return base
+        if (hasEncryptedImageExtension(base)) return base
         val derived = extensionForMime(mime)
-        return if (derived != null) "$base.$derived" else "$base.${Ckf1.FILE_EXTENSION}"
+        val imageBase = when {
+            hasImageExtension(base) -> base
+            derived != null -> "$base.$derived"
+            else -> null
+        }
+        return if (imageBase != null) {
+            "$imageBase.$ENCRYPTED_IMAGE_EXTENSION"
+        } else {
+            "$base.${Ckf1.FILE_EXTENSION}"
+        }
     }
 
     /**
-     * "photo.jpg.cki" -> "photo.jpg"; a camouflaged encrypted image
-     * ("photo.jpg") already carries the right extension and passes through
-     * unchanged; anything else -> the name as-is.
+     * "photo.jpg.tnpi" -> "photo.jpg"; "photo.jpg.cki" -> "photo.jpg";
+     * a v1.2.0-era real-extension name ("photo.jpg") and anything else
+     * pass through unchanged.
      */
     fun suggestedOriginalName(displayName: String?): String {
         val base = displayName?.substringAfterLast('/')?.takeIf { it.isNotBlank() } ?: return "file"
-        return if (base.endsWith(".${Ckf1.FILE_EXTENSION}", ignoreCase = true)) {
-            base.dropLast(Ckf1.FILE_EXTENSION.length + 1).ifBlank { "file" }
-        } else {
-            base
+        return when {
+            base.endsWith(".${Ckf1.FILE_EXTENSION}", ignoreCase = true) ->
+                base.dropLast(Ckf1.FILE_EXTENSION.length + 1).ifBlank { "file" }
+            base.endsWith(".$ENCRYPTED_IMAGE_EXTENSION", ignoreCase = true) ->
+                base.dropLast(ENCRYPTED_IMAGE_EXTENSION.length + 1).ifBlank { "file" }
+            else -> base
         }
     }
+
+    /**
+     * The suggested SAVE name for a decrypted image (v1.3.0): the original
+     * name with the encrypted suffix stripped. When what remains carries
+     * no extension at all (a renamed source, say "photo.tnpi"), the
+     * extension comes from the DECRYPTED CONTENT's sniffed MIME — the one
+     * honest witness of what the plaintext actually is
+     * ("photo" + image/jpeg -> "photo.jpg").
+     */
+    fun suggestedPlaintextName(displayName: String?, sniffedMime: String?): String {
+        val name = suggestedOriginalName(displayName)
+        if (name.substringAfterLast('.', "").isNotEmpty()) return name
+        return extensionForMime(sniffedMime)?.let { "$name.$it" } ?: name
+    }
+
+    /**
+     * The MIME an ENCRYPTED output shares with (v1.3.0): `.tnpi` files
+     * carry the Turnypt image type; everything else (`.cki` and the
+     * v1.2.0-era real-extension files) carries the honest generic
+     * x-cipherkey type — it is Turnypt ciphertext, never a real image.
+     */
+    fun encryptedShareMime(name: String?): String =
+        if (hasEncryptedImageExtension(name ?: "")) ENCRYPTED_IMAGE_MIME else Ckf1.MIME_TYPE
 
     /**
      * True for the image MIME family (drives the preview vs. save-only UI).
@@ -112,9 +165,9 @@ object ImageFiles {
 
     /**
      * v1.2.0: reads the first bytes of [uri] and reports whether the content
-     * carries the CKF1 magic — the one honest way to tell an encrypted image
-     * (which now looks like a normal image) from a plain one. Never throws;
-     * unreadable content is simply "not CKF1".
+     * carries the CKF1 magic — the one honest way to tell an encrypted file
+     * from a plain one, whatever the name says. Never throws; unreadable
+     * content is simply "not CKF1".
      */
     fun sniffsCkf1(context: Context, uri: Uri): Boolean = runCatching {
         context.contentResolver.openInputStream(uri)?.use { input ->

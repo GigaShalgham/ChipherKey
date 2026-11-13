@@ -405,8 +405,9 @@ class ToolsViewModel @Inject constructor(
     }
 
     /**
-     * The user picked a .cki file: stream-decrypt it into a private cache
-     * file (never the gallery), then preview + save/share from there.
+     * The user picked a .cki/.tnpi file: stream-decrypt it into a private
+     * cache file (never the gallery), then preview + save/share from
+     * there.
      */
     fun decryptImageFrom(uri: Uri, displayName: String?) {
         val op: suspend () -> Unit = { decryptImageInternal(uri, displayName) }
@@ -612,7 +613,7 @@ class ToolsViewModel @Inject constructor(
                     imageBusy = false,
                     imageDecryptResult = ImageDecryptDone(
                         cacheFileUriString = cache.toURI().toString(),
-                        suggestedName = ImageFiles.suggestedOriginalName(displayName),
+                        suggestedName = ImageFiles.suggestedPlaintextName(displayName, mime),
                         mime = mime,
                         isImage = isImage,
                         preview = preview,

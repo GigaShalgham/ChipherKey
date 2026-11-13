@@ -158,7 +158,12 @@ fun DecryptScreen(
                 Button(
                     onClick = {
                         pickCki.launch(
-                            arrayOf(Ckf1.MIME_TYPE, "image/*", "application/octet-stream"),
+                            arrayOf(
+                                Ckf1.MIME_TYPE,
+                                ImageFiles.ENCRYPTED_IMAGE_MIME,
+                                "image/*",
+                                "application/octet-stream",
+                            ),
                         )
                     },
                     enabled = !state.imageBusy,

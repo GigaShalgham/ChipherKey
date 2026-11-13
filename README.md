@@ -41,11 +41,13 @@ When an app's selection toolbar is unavailable, the Home screen offers an
   mode benchmarks both once on your device and uses the faster; the
   choice travels inside every message, so recipients always decrypt.
 - **Image encryption, native** — encrypt photos for the same contacts
-  with the same passphrase (chunk-wise-authenticated `.cki` files; one
-  64 KiB chunk in memory at a time, so any file size is safe).
-  Reachable from Quick Access, the Encrypt/Decrypt tabs (Text | Image
-  switch), the sharesheet, the floating assistant — and since v1.0.0,
-  tapping a `.cki` file in ANY file manager offers Turnypt directly.
+  with the same passphrase (chunk-wise-authenticated files; one
+  64 KiB chunk in memory at a time, so any file size is safe). Encrypted
+  images carry the Turnypt-ecosystem extension — `photo.jpg.tnpi` — and
+  anything else stays `.cki`. Reachable from Quick Access, the
+  Encrypt/Decrypt tabs (Text | Image switch), the sharesheet, the
+  floating assistant — and since v1.0.0, tapping a `.cki` file, and since
+  v1.3.0 a `.tnpi` file, in ANY file manager offers Turnypt directly.
 - **Nothing sensitive at rest** — the passphrase is never stored; unlocked
   keys live in memory only and are wiped on lock, timeout or replacement;
   at rest only a Keystore-wrapped, device-bound **digest** verifier exists

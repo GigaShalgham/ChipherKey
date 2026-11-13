@@ -70,15 +70,18 @@ offset size field
   Poly1305 per chunk — recorded in the file, so any receiver with any
   preference decrypts it. Security is identical (256-bit key, AEAD,
   128-bit tag).
-- Suggested file name (v1.2.0): an encrypted IMAGE keeps the source's real
-  image extension (`photo.jpg` → `photo.jpg`) and shares with the matching
-  image MIME — the file looks like (and is handled as) a normal image, and
-  Turnypt — registered as an opener for those extensions — decrypts it by
-  sniffing the CKF1 magic. Sources that are not recognizable as images
-  keep the legacy `<original>.cki` name and `application/x-cipherkey`
-  MIME; those files keep opening through the `.cki` filters as before.
-  What is encrypted is decided by CONTENT (the magic bytes), never by the
-  name — the camouflage never hides a file from the app itself.
+- Suggested file name (v1.3.0): an encrypted IMAGE is named in the TNP
+  family — the file sibling of the TNP1:/TNS1: wire prefixes: `photo.jpg`
+  → `photo.jpg.tnpi` (the original name is kept intact inside, so
+  decrypting restores it exactly; an extension-less name derives its real
+  image extension first: "IMG_001" + image/png → `IMG_001.png.tnpi`). The
+  pair carries its own `application/x-turnypt-image` MIME: the SAF create
+  dialog is an x-turnypt-image create, sharing the finished file
+  advertises that type, and the OS offers Turnypt for opening any `.tnpi`
+  file. Sources that are not recognizable as images keep the legacy
+  `<original>.cki` name and `application/x-cipherkey` MIME; those files
+  keep opening through the `.cki` filters as before. What is encrypted
+  is decided by CONTENT (the magic bytes), never by the name.
 
 Text messages stay on the frozen `CK1:` wire format — untouched.
 
@@ -114,8 +117,9 @@ Home (Quick Access)
 Encrypt tab  ──[ Text | Image ]──▶  Image: pick image (SAF) → same ContactPicker
                                     → same unlock card (passphrase + fingerprint)
                                     → cipher chip (Automatic/AES/ChaCha) → Encrypt
-                                    → CreateDocument "name.jpg" (real image
-                                      extension kept) → saved + share as image
+                                    → CreateDocument "name.jpg.tnpi" (Turnypt
+                                      .tnpi extension) → saved + share as
+                                      x-turnypt-image
 Decrypt tab  ──[ Text | Image ]──▶  Image: pick encrypted file (SAF) → contact
                                     auto-resolved from keyId → unlock if needed
                                     → decrypted to private cache → preview
@@ -124,9 +128,13 @@ Decrypt tab  ──[ Text | Image ]──▶  Image: pick encrypted file (SAF) �
 Sharesheet / file managers                (external entry points, same engine)
 ├── SEND image/*           → ImageCipherActivity → magic sniff: CKF1 → decrypt,
 │                            anything else → encrypt flow
-├── SEND x-cipherkey       → ImageCipherActivity → decrypt flow
-└── VIEW content (image/* or image extension) → decrypt attempt; a plain
-     image offers "Encrypt this image instead" (no dead end)
+├── SEND x-cipherkey /
+│   x-turnypt-image       → ImageCipherActivity → decrypt flow
+└── VIEW .tnpi / .cki      → decrypt attempt; a file that is not CKF1 by
+                             content gets the honest notice plus an
+                             "Encrypt this instead" recovery (no dead end).
+                             Plain images are not registered — they open in
+                             the gallery as usual (v1.3.0).
 
 Floating assistant panel
 └── "Encrypt image" row    → ImageCipherActivity picker mode

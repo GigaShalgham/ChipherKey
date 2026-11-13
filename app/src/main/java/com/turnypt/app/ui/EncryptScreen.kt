@@ -34,7 +34,6 @@ import com.turnypt.app.companion.ImageFiles
 import com.turnypt.app.security.BiometricKeyStore
 import com.turnypt.app.security.BiometricPromptHost
 import com.turnypt.app.security.rememberBiometricPromptHelper
-import com.turnypt.core.crypto.Ckf1
 
 /**
  * In-app Encrypt tab (v0.3.0; v0.6.0 adds the Text | Image segments):
@@ -80,18 +79,20 @@ fun EncryptScreen(
                 uri,
                 ImageFiles.queryDisplayName(context, uri),
                 ImageFiles.querySize(context, uri),
-                // v1.2.0: the advertised type rides along so the encrypted
-                // output keeps the source's real image extension.
+                // v1.3.0: the advertised type rides along so an extension-less
+                // source still lands in the TNP family with its real image
+                // extension inside (IMG_001 + image/png -> IMG_001.png.tnpi).
                 ImageFiles.queryMimeType(context, uri),
             )
         }
     }
-    // v1.2.0: where the encrypted image lands (SAF CreateDocument — user
+    // v1.3.0: where the encrypted image lands (SAF CreateDocument — user
     // picks the location; nothing is written without this explicit target).
-    // The file keeps its real image extension — it opens through Turnypt
-    // like any image, and the CKF1 content sniffing does the rest.
+    // The output carries the Turnypt-ecosystem extension — <name>.tnpi —
+    // and is created under its own application/x-turnypt-image type, so
+    // the suggested name arrives in the dialog pre-suffixed.
     val createCki = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("image/*"),
+        ActivityResultContracts.CreateDocument(ImageFiles.ENCRYPTED_IMAGE_MIME),
     ) { uri ->
         if (uri != null) viewModel.encryptImageTo(uri)
     }
@@ -284,13 +285,14 @@ fun EncryptScreen(
                 state = state,
                 onShare = {
                     state.imageEncryptResult?.let { result ->
-                        // v1.2.0: the encrypted image keeps its real image
-                        // extension — share it AS an image so receivers treat
-                        // it like one (legacy .cki files keep their own mime).
+                        // v1.3.0: the encrypted image is a Turnypt file
+                        // (<name>.tnpi) and shares under its own
+                        // x-turnypt-image type; legacy .cki outputs and
+                        // anything else keep the honest x-cipherkey type.
                         ImageShare.uri(
                             context,
                             Uri.parse(result.outputUriString),
-                            ImageFiles.mimeForName(result.displayName) ?: Ckf1.MIME_TYPE,
+                            ImageFiles.encryptedShareMime(result.displayName),
                             context.getString(R.string.image_share_action),
                         )
                     }

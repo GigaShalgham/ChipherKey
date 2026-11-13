@@ -277,7 +277,7 @@
 
     <!-- جریان رمزنگاری تصویر -->
     <string name="image_pick_action">انتخاب تصویر</string>
-    <string name="image_pick_hint">یک تصویر انتخاب کنید — روی همین دستگاه رمزنگاری می‌شود و به‌صورت یک فایل تصویری معمولی ذخیره می‌گردد که مثل هر پیوست دیگری قابل ارسال است؛ باز کردنش در Turnypt آن را رمزگشایی می‌کند.</string>
+    <string name="image_pick_hint">یک تصویر انتخاب کنید — روی همین دستگاه رمزنگاری می‌شود و به‌صورت فایل تصویری Turnypt ‏(photo.jpg.tnpi) ذخیره می‌گردد که مثل هر پیوست دیگری قابل ارسال است؛ باز کردنش در Turnypt آن را رمزگشایی می‌کند.</string>
     <string name="image_replace_action">انتخاب تصویر دیگر</string>
     <string name="image_encrypt_action">رمزنگاری و ذخیره</string>
     <string name="image_encrypting">در حال رمزنگاری…</string>
@@ -290,7 +290,7 @@
 
     <!-- جریان رمزگشایی تصویر -->
     <string name="image_pick_cki_action">انتخاب فایل رمزنگاری‌شده</string>
-    <string name="image_pick_cki_hint">تصویر یا فایل ‎.cki‌ای را که Turnypt رمزنگاری کرده انتخاب کنید — تصاویر رمزنگاری‌شده پسوند واقعی تصویر را حفظ می‌کنند. مخاطب از روی خود فایل شناسایی می‌شود.</string>
+    <string name="image_pick_cki_hint">فایل ‎.tnpi یا ‎.cki‌ای را که Turnypt رمزنگاری کرده انتخاب کنید — تصاویر رمزنگاری‌شده پسوند ‎.tnpi می‌گیرند. مخاطب از روی خود فایل شناسایی می‌شود.</string>
     <string name="image_decrypt_action">رمزگشایی</string>
     <string name="image_decrypting">در حال رمزگشایی…</string>
     <string name="image_result_decrypt_title">رمزگشایی شد — از %1$s</string>
@@ -323,7 +323,7 @@
     <!-- جریان‌های تصویری کامپنیون (برچسب‌های اشتراک — کوتاه) -->
     <string name="image_encrypt_label">رمزنگاری تصویر (Turnypt)</string>
     <string name="image_decrypt_label">رمزگشایی فایل ‎.cki (Turnypt)</string>
-    <string name="image_open_label">باز کردن با Turnypt</string>
+    <string name="image_decrypt_tnpi_label">رمزگشایی تصویر ‎.tnpi (Turnypt)</string>
     <string name="image_encrypt_instead_action">رمزنگاری این تصویر با Turnypt</string>
     <string name="image_sheet_title_encrypt">رمزنگاری تصویر</string>
     <string name="image_sheet_title_decrypt">رمزگشایی فایل تصویر</string>

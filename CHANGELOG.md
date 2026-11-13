@@ -9,6 +9,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-13 — Turnypt-ecosystem image extension (.tnpi)
+
+The user's ruling on the 1.2.0 image-extension approach, applied at the
+source: the extension of an encrypted image must carry the Turnypt theme —
+not CipherKey's `.cki`, and not the source's own image extension — and
+Turnypt must be suggested for opening files with that extension.
+
+### Changed
+
+- **Encrypted images are named in the TNP family** (user ruling: "not
+  .cki and not jpg or anything like it — the extension must be aligned
+  with the Turnypt ecosystem, with that theme"): the encrypted output of
+  an image is `<original-name>.tnpi` — `photo.jpg` → `photo.jpg.tnpi`
+  (the original name is kept intact inside, so decrypting restores it
+  exactly); an extension-less source derives its real image extension
+  first (`IMG_001` + image/png → `IMG_001.png.tnpi`). The pair carries
+  its own `application/x-turnypt-image` MIME: the SAF create dialog is an
+  x-turnypt-image create, and sharing the finished file advertises that
+  type. What is encrypted is still decided by CONTENT (the CKF1 magic),
+  never by the name. Sources not recognizable as images keep the legacy
+  `<name>.cki` + `application/x-cipherkey` output, and every `.cki` file
+  ever written keeps opening exactly as before.
+- **Turnypt is suggested for opening `.tnpi` files** (user ruling: "for
+  opening a file with that extension, Turnypt must be suggested"):
+  `ACTION_VIEW`/`ACTION_SEND` intent filters in the four shapes real
+  file managers produce (content/file, typed and untyped — mirroring the
+  proven .cki set) make the OS offer Turnypt for any `.tnpi` file, and
+  the user can set it as the default opener. The 1.2.0 plain-image
+  registration is GONE: normal images open in the gallery as usual;
+  sharing one INTO Turnypt (SEND image/*, kept since v0.6.0) still offers
+  the encrypt flow. A `.tnpi`/`.cki` file that is not CKF1 by content
+  gets the honest "not encrypted by Turnypt" notice plus an "Encrypt
+  this instead" recovery.
+- Decrypting now suggests the original name with the suffix stripped; a
+  result that carries no extension at all (a renamed source, say
+  `photo.tnpi`) gets its extension from the DECRYPTED CONTENT's sniffed
+  MIME (`photo` + sniffed image/jpeg → `photo.jpg`) — the one honest
+  witness of what the plaintext actually is.
+
+### Compatibility
+
+- v1.2.0-era outputs (encrypted images written under their real image
+  extension) are unchanged files and still decrypt through every entry
+  point that routes by content: the in-app Decrypt tab picker, and
+  Share → Turnypt (the magic sniff routes them to the decrypt flow). They
+  simply no longer match a VIEW filter by name — they are Turnypt
+  ciphertext, not real images, and their share MIME is now the honest
+  `application/x-cipherkey`.
+- The binary CKF1 magic, the `.cki` extension/MIME and every `.cki`
+  filter are untouched; the wire prefixes (TNP1:/TNS1:, legacy
+  CK1:/CKS1:) are untouched.
+
 ## [1.2.0] - 2026-11-13 — Image extensions, unlock fixes, navigation fixes
 
 The four user reports on the 1.1.0 release, each traced to its root cause

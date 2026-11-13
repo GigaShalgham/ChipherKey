@@ -65,16 +65,19 @@ import com.turnypt.data.preferences.CipherPreference
  *
  *  - ACTION_SEND with an image MIME type → encrypt the shared image for a
  *    contact;
- *  - ACTION_SEND or ACTION_VIEW with the x-cipherkey MIME type → decrypt
- *    a .cki file;
+ *  - ACTION_SEND or ACTION_VIEW with the x-cipherkey / x-turnypt-image
+ *    MIME type (a .cki or .tnpi file) → decrypt it;
  *  - no payload (floating assistant) → in-sheet image picker.
  *
- * v1.2.0: encrypted images now keep their real image extension (the
- * camouﬂage), so the sheet is also the system's image opener: ACTION_VIEW
- * of ANY image lands here, the CKF1 magic decides decrypt vs. "not
- * encrypted", and an unencrypted image offers the encrypt flow instead of
- * a dead end. SEND routing is likewise content-based (magic sniff), not
- * name-based.
+ * v1.3.0: encrypted images carry the Turnypt-ecosystem extension
+ * (<name>.tnpi, MIME application/x-turnypt-image), so the sheet is the
+ * system's opener for THOSE files and legacy .cki: ACTION_VIEW of a
+ * .tnpi/.cki lands here, the CKF1 magic decides decrypt vs. "not
+ * encrypted", and a file that is not CKF1 by content gets an honest
+ * notice plus an "Encrypt this instead" recovery. Plain images are NOT
+ * registered — they open in the gallery as usual; sharing one INTO
+ * Turnypt (SEND with an image MIME type) still offers the encrypt flow;
+ * SEND routing is content-based (magic sniff), not name-based.
  *
  * Companion discipline as everywhere: FLAG_SECURE (no screenshots/recents
  * of decrypted content), noHistory + excludeFromRecents in the manifest,
@@ -174,9 +177,10 @@ class ImageCipherActivity : FragmentActivity() {
                     sheetMode = SheetMode.PICKER_ENCRYPT
                     return
                 }
-                // Registered as an image opener now: most images are NOT
-                // Turnypt files — the decrypt attempt reports that honestly
-                // and the sheet offers "Encrypt this image instead".
+                // v1.3.0: the filters route .tnpi/.cki names (and the
+                // custom MIME types) here — these should be Turnypt
+                // files; one that is not CKF1 by content gets the honest
+                // notice, plus the encrypt-instead recovery below.
                 sheetMode = SheetMode.DECRYPT_SHARED
                 pendingViewUri = data
                 pendingViewName = ImageFiles.queryDisplayName(this, data)
@@ -231,11 +235,11 @@ private fun ImageCipherSheet(
             viewModel.decryptImageFrom(uri, ImageFiles.queryDisplayName(context, uri))
         }
     }
-    // v1.2.0: the encrypted output keeps its real image extension — the
-    // create dialog is an image create, and the suggested name is the
-    // source's own name.
+    // v1.3.0: the encrypted output carries the Turnypt-ecosystem extension
+    // (<name>.tnpi) — the create dialog is an x-turnypt-image create, and
+    // the suggested name arrives pre-suffixed.
     val createCki = androidx.activity.compose.rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("image/*"),
+        ActivityResultContracts.CreateDocument(ImageFiles.ENCRYPTED_IMAGE_MIME),
     ) { uri ->
         if (uri != null) viewModel.encryptImageTo(uri)
     }
@@ -295,7 +299,12 @@ private fun ImageCipherSheet(
                     Button(
                         onClick = {
                             pickCki.launch(
-                                arrayOf(Ckf1.MIME_TYPE, "image/*", "application/octet-stream"),
+                                arrayOf(
+                                    Ckf1.MIME_TYPE,
+                                    ImageFiles.ENCRYPTED_IMAGE_MIME,
+                                    "image/*",
+                                    "application/octet-stream",
+                                ),
                             )
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -318,9 +327,9 @@ private fun ImageCipherSheet(
                     },
                     onClear = viewModel::clearImageResult,
                 )
-                // v1.2.0: the sheet is an image OPENER now — an opened image
-                // that Turnypt did not encrypt is not an error to dead-end
-                // on. Offer the encrypt flow right where the user looks.
+                // v1.3.0: a VIEWed .tnpi/.cki that is not CKF1 by content is
+                // not an error to dead-end on. Offer the encrypt flow right
+                // where the user looks.
                 if (canEncryptInstead &&
                     state.imageDecryptResult == null &&
                     !state.imageBusy &&
@@ -407,13 +416,13 @@ private fun ImageCipherSheet(
                 state = state,
                 onShare = {
                     state.imageEncryptResult?.let { result ->
-                        // v1.2.0: the encrypted image shares AS an image
-                        // (real extension → real MIME); legacy .cki outputs
-                        // keep their own type.
+                        // v1.3.0: a .tnpi output shares under its own
+                        // x-turnypt-image type; everything else keeps the
+                        // honest x-cipherkey type.
                         ImageShare.uri(
                             context,
                             Uri.parse(result.outputUriString),
-                            ImageFiles.mimeForName(result.displayName) ?: Ckf1.MIME_TYPE,
+                            ImageFiles.encryptedShareMime(result.displayName),
                             context.getString(R.string.image_share_action),
                         )
                     }
