@@ -1,7 +1,7 @@
 # CipherKey
 
 [![CI](https://github.com/GigaShalgham/CHIPHERKEY/actions/workflows/android-ci.yml/badge.svg)](https://github.com/GigaShalgham/CHIPHERKEY/actions/workflows/android-ci.yml)
-[![Release](https://img.shields.io/badge/release-v0.4.2-blue.svg)](https://github.com/GigaShalgham/CHIPHERKEY/releases/latest)
+[![Release](https://img.shields.io/badge/release-v0.6.0-blue.svg)](https://github.com/GigaShalgham/CHIPHERKEY/releases/latest)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Min SDK: 26](https://img.shields.io/badge/min_SDK-26_(Android_8.0)-green.svg)](app/build.gradle.kts)
 
@@ -72,7 +72,7 @@ Each release page states the build type and the APK's SHA-256 checksum —
 verify before installing:
 
 ```bash
-sha256sum CipherKey-v0.4.2-debug.apk
+sha256sum CipherKey-v0.6.0-debug.apk
 ```
 
 > The APK attached to current releases is the CI **debug build** of the

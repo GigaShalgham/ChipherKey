@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-13 — second stable release: image encryption, ChaCha20-Poly1305, Automatic cipher
+
+Promoted from the 0.6.0-alpha candidate after on-device validation:
+identical features, no code change beyond the version identity. The
+second full (non-pre-) release — and the first stable build to carry
+the 0.5.x line: the Calm Vault design language with launcher fallback
+shortcuts (0.5.0), the fingerprint / 256-MiB / Persian fixes batch
+(0.5.1), clipboard history with entry-time passphrase suggestion
+(0.5.2), plus the 0.6.0 headline: natively integrated image
+encryption, ChaCha20-Poly1305 and the Automatic cipher preference.
+
+### Changed
+
+- Version identity: `0.6.0-alpha` / versionCode 13 → `0.6.0` / versionCode 14.
+- README release badge and checksum example now point at v0.6.0.
+
 ## [0.6.0-alpha] - 2026-11-13 — image encryption, native; ChaCha20-Poly1305; Automatic cipher
 
 The headline: **image encryption is no longer a side feature — it is part
